@@ -9,8 +9,7 @@ export const ENTRY_SHARED_BEFORE = [
 ];
 
 export const ENTRY_PER_PI = [
-  { id: "p2a", label: "Снимок ИДК" },
-  { id: "p2b", label: "Контроль снимка ИДК" },
+  { id: "p2", label: "ИДК и контроль снимка" },
   { id: "p1", label: "Таможенный осмотр" },
   { id: "p3", label: "Транспортный контроль" },
   { id: "p4", label: "Ветеринарный контроль" },
@@ -40,8 +39,7 @@ export function getEntryIMSteps(dtStatus: DTStatus): EntryIMStep[] {
   const conditional: EntryIMStep[] =
     cond !== "hidden"
       ? [
-          { id: "im7a", label: "Снимок ИДК", type: "mandatory" },
-          { id: "im7b", label: "Контроль снимка ИДК", type: "mandatory" },
+          { id: "im7", label: "ИДК и контроль снимка", type: "mandatory" },
           { id: "im6", label: "Таможенный осмотр", type: cond },
           { id: "im8", label: "Транспортный контроль", type: cond },
           { id: "im9", label: "Ветеринарный контроль", type: cond },
@@ -55,10 +53,7 @@ export function getEntryIMSteps(dtStatus: DTStatus): EntryIMStep[] {
             isCustoms: true,
           },
         ]
-      : [
-          { id: "im7a", label: "Снимок ИДК", type: "mandatory" },
-          { id: "im7b", label: "Контроль снимка ИДК", type: "mandatory" },
-        ];
+      : [{ id: "im7", label: "ИДК и контроль снимка", type: "mandatory" }];
   const final: EntryIMStep[] = [
     { id: "im13", label: "Выезд с территории пограничного поста в сторону РК", type: "mandatory" },
   ];

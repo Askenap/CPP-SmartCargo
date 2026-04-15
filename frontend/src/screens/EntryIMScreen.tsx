@@ -6,6 +6,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { Ring } from "../components/Ring";
 import { EntryStepRow } from "../components/EntryStepRow";
 import { ScanModal } from "../components/ScanModal";
+import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
 import { stepSt } from "../components/stepStyles";
@@ -40,24 +41,9 @@ export function EntryIMScreen({ card, onBack, onComplete }: Props) {
         rel="stylesheet"
       />
       {vd && <ScanModal name={vd} onClose={() => setVd(null)} />}
-      <Header title="ЦПП — Въезд в РК" sub="ИМ / Порожний" onBack={onBack} />
+      <Header title="ЦПП — Въезд в РК" sub={card.scenarioLabel || "ИМ / Порожний"} onBack={onBack} />
       <div style={{ padding: "8px 12px 0" }}>
-        <button
-          style={{
-            width: "100%",
-            padding: 14,
-            background: C.white,
-            border: `2px solid ${C.primary}`,
-            borderRadius: 12,
-            color: C.primary,
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          ⊞ QR рейса
-        </button>
+        <QrButton card={card} />
       </div>
       <div
         style={{

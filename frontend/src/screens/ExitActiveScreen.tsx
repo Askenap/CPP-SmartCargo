@@ -7,6 +7,7 @@ import { SourceCard } from "../components/SourceCard";
 import { Ring } from "../components/Ring";
 import { ExitStepRow } from "../components/ExitStepRow";
 import { ScanModal } from "../components/ScanModal";
+import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
 import { stepSt } from "../components/stepStyles";
@@ -53,22 +54,7 @@ export function ExitActiveScreen({ card, onBack, onComplete }: Props) {
       {vd && <ScanModal name={vd} onClose={() => setVd(null)} />}
       <Header title="ЦПП — Выезд из РК" sub={card.scenarioLabel} onBack={onBack} />
       <div style={{ padding: "8px 12px 0" }}>
-        <button
-          style={{
-            width: "100%",
-            padding: 14,
-            background: C.white,
-            border: `2px solid ${C.primary}`,
-            borderRadius: 12,
-            color: C.primary,
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          ⊞ QR рейса
-        </button>
+        <QrButton card={card} />
       </div>
       <div
         style={{

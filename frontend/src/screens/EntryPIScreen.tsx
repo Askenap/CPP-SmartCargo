@@ -15,6 +15,7 @@ import { Ring } from "../components/Ring";
 import { HScroll } from "../components/HScroll";
 import { EntryStepRow } from "../components/EntryStepRow";
 import { ScanModal } from "../components/ScanModal";
+import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
 import { stepSt } from "../components/stepStyles";
@@ -188,28 +189,32 @@ export function EntryPIScreen({ card, onBack, onComplete }: Props) {
                 </div>
               </button>
             ))}
+
+            <button
+              onClick={() => window.open("https://cargo.ruqsat.kz/", "_blank", "noopener")}
+              style={{
+                width: "100%",
+                padding: 10,
+                marginTop: 6,
+                borderRadius: 10,
+                border: `2px dashed ${C.primary}`,
+                background: C.primaryLight,
+                color: C.primary,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              ＋ Забронировать электронную очередь Cargo Ruqsat
+            </button>
           </div>
         </div>
       )}
 
       <Header title="ЦПП — Въезд в РК" sub={`${piCount} ПИ · ${tonName}`} onBack={onBack} />
       <div style={{ padding: "8px 12px 0" }}>
-        <button
-          style={{
-            width: "100%",
-            padding: 14,
-            background: C.white,
-            border: `2px solid ${C.primary}`,
-            borderRadius: 12,
-            color: C.primary,
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          ⊞ QR рейса
-        </button>
+        <QrButton card={card} />
       </div>
       <div
         style={{

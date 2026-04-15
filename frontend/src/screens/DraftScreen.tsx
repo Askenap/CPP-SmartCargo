@@ -2,6 +2,7 @@ import { C } from "../data/colors";
 import { Header } from "../components/Header";
 import { StatusBadge } from "../components/StatusBadge";
 import { SourceCard } from "../components/SourceCard";
+import { QrButton } from "../components/QrButton";
 import type { CPPCard } from "../types";
 
 interface Props {
@@ -20,22 +21,7 @@ export function DraftScreen({ card, onBack }: Props) {
       />
       <Header title="ЦПП — Черновик" sub={card.scenarioLabel} onBack={onBack} />
       <div style={{ padding: "8px 12px 0" }}>
-        <button
-          style={{
-            width: "100%",
-            padding: 14,
-            background: C.white,
-            border: `2px dashed ${C.draft}`,
-            borderRadius: 12,
-            color: C.draft,
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          ⊞ QR Draft
-        </button>
+        <QrButton card={card} variant="draft" />
       </div>
       <div
         style={{
