@@ -3,6 +3,7 @@ import type { CPPCard } from "../types";
 export const initialCards: CPPCard[] = [
   {
     id: "active1",
+    cppNumber: "SC/140426/000001",
     status: "active",
     plate: "898UJY01",
     driver: "Аппаков Т.Б.",
@@ -20,6 +21,7 @@ export const initialCards: CPPCard[] = [
   },
   {
     id: "active_inland",
+    cppNumber: "SC/140426/000002",
     status: "active",
     plate: "771ABC02",
     driver: "Оспанов М.К.",
@@ -37,6 +39,7 @@ export const initialCards: CPPCard[] = [
   },
   {
     id: "active_1pi",
+    cppNumber: "SC/140426/000003",
     status: "active",
     plate: "220GHK04",
     driver: "Нурланов А.Б.",
@@ -54,6 +57,7 @@ export const initialCards: CPPCard[] = [
   },
   {
     id: "active_im",
+    cppNumber: "SC/140426/000004",
     status: "active",
     plate: "445RTY06",
     driver: "Жумабеков С.",
@@ -67,6 +71,7 @@ export const initialCards: CPPCard[] = [
   },
   {
     id: "draft2",
+    cppNumber: "SC/140426/000005",
     status: "draft",
     plate: "012BKR07",
     driver: "Қасымов Е.Т.",
@@ -86,6 +91,7 @@ export const initialCards: CPPCard[] = [
   },
   {
     id: "draft3",
+    cppNumber: "SC/140426/000006",
     status: "draft",
     plate: "331NKZ05",
     driver: "Ибрагимов Р.Д.",
@@ -107,6 +113,7 @@ export const initialCards: CPPCard[] = [
   // ─── Авто-ЦПП (тип определяется системой) ───
   {
     id: "auto_entry1",
+    cppNumber: "SC/150426/000007",
     status: "active",
     plate: "555XYZ03",
     driver: "Серіков Б.Н.",
@@ -120,6 +127,7 @@ export const initialCards: CPPCard[] = [
   },
   {
     id: "auto_exit1",
+    cppNumber: "SC/150426/000008",
     status: "active",
     plate: "999QWE08",
     driver: "Мусин К.А.",

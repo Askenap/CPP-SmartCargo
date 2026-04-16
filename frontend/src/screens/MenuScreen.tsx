@@ -121,42 +121,32 @@ export function MenuScreen({ cards, onSelect, onCreate, onReset, onBorderMode }:
             }}
           >
             <div onClick={() => onSelect(c.id)} style={{ cursor: "pointer" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: 4,
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span style={{ fontSize: 15, fontWeight: 700 }}>{c.plate}</span>
                 <StatusBadge status={c.status} />
               </div>
-              <div style={{ fontSize: 11, color: C.textSec, marginBottom: 2 }}>{c.driver}</div>
-              <div
-                style={{
-                  fontSize: 9,
-                  fontWeight: 600,
-                  color: C.primary,
-                  background: C.primaryLight,
-                  padding: "1px 5px",
-                  borderRadius: 4,
-                  display: "inline-block",
-                }}
-              >
-                {c.type}
-              </div>
-              {c.scenarioLabel && (
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: C.draft,
-                    marginTop: 2,
-                    fontWeight: 600,
-                  }}
-                >
-                  {c.scenarioLabel}
+              {c.cppNumber && (
+                <div style={{ fontSize: 9, color: C.gray, fontFamily: "monospace", marginBottom: 3 }}>
+                  {c.cppNumber}
                 </div>
               )}
+              <div style={{ fontSize: 11, color: C.textSec, marginBottom: 3 }}>{c.driver}</div>
+              <div style={{ fontSize: 10, color: C.textSec, marginBottom: 3 }}>
+                {c.from || "—"} → {c.to || "—"}
+              </div>
+              <div style={{ fontSize: 9, color: C.gray, marginBottom: 3 }}>
+                {c.customsPost}
+              </div>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 9, fontWeight: 600, color: C.primary, background: C.primaryLight, padding: "1px 5px", borderRadius: 4 }}>
+                  {c.type}
+                </span>
+                {c.scenarioLabel && (
+                  <span style={{ fontSize: 9, fontWeight: 600, color: C.draft, background: "#eef2ff", padding: "1px 5px", borderRadius: 4 }}>
+                    {c.scenarioLabel}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}

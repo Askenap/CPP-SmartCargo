@@ -256,7 +256,18 @@ export function BorderCppView({
       `Разрешить въезд АТС ${card.plate} на территорию пограничного поста?`,
       "Разрешить",
       CB.green,
-      () => { onActivateCard(); onAddScanRecord("Въезд на территорию — разрешён"); setConfirm(null); }
+      () => {
+        onActivateCard();
+        // Ставим прогресс на 1-й шаг (въезд на территорию пройден)
+        const initProgress = isExit
+          ? { currentStep: 1 }
+          : isPI
+            ? { shared: 1 }
+            : { currentStep: 1 };
+        onUpdateCard({ progress: initProgress });
+        onAddScanRecord("Въезд на территорию — разрешён");
+        setConfirm(null);
+      }
     );
   };
   const handleDenyEntry = () => {
@@ -292,7 +303,25 @@ export function BorderCppView({
       `Подтвердить прохождение досмотра ТС ${card.plate}?`,
       "Пройден",
       CB.green,
-      () => { onAddScanRecord("Досмотр ТС ПС — пройден"); setConfirm(null); }
+      () => {
+        // Обновляем прогресс: досмотр ТС пройден
+        const curProgress = card.progress || {};
+        if (isExit) {
+          // Exit: "Досмотр ТС" = index 12 (ex13), ставим currentStep = max(current, 13)
+          const cs = curProgress.currentStep ?? 0;
+          onUpdateCard({ progress: { ...curProgress, currentStep: Math.max(cs, 13) } });
+        } else if (isPI) {
+          // Entry PI: "Досмотр ТС" = s4 (index 4 в SHARED_BEFORE), ставим shared >= 5
+          const sh = curProgress.shared ?? 0;
+          onUpdateCard({ progress: { ...curProgress, shared: Math.max(sh, ENTRY_SHARED_BEFORE.length) } });
+        } else if (isIMorEmpty) {
+          // Entry IM: "Досмотр ТС" = im5 (index 5), ставим currentStep >= 6
+          const cs = curProgress.currentStep ?? 0;
+          onUpdateCard({ progress: { ...curProgress, currentStep: Math.max(cs, 6) } });
+        }
+        onAddScanRecord("Досмотр ТС ПС — пройден");
+        setConfirm(null);
+      }
     );
   };
   const handleInspectExtra = () => {

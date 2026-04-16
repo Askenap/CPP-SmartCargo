@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { C } from "../data/colors";
+import { generateCppNumber } from "../data/cppNumber";
 import { Header } from "../components/Header";
 import {
   mockDrivers,
@@ -269,6 +270,7 @@ export function CreateWizard({ onDone, onBack }: Props) {
 
     return {
       id: `n_${Date.now()}`,
+      cppNumber: generateCppNumber(),
       status: "draft",
       plate: plate.toUpperCase(),
       driver: dName || (dT === "iin" ? `ИИН: ${dV}` : `Пасп: ${dV}`),
@@ -337,6 +339,7 @@ export function CreateWizard({ onDone, onBack }: Props) {
         : undefined;
     onDone({
       id: `auto_${Date.now()}`,
+      cppNumber: generateCppNumber(),
       status: "draft",
       plate: plate.toUpperCase(),
       driver: dName || (dT === "iin" ? `ИИН: ${dV}` : `Пасп: ${dV}`),

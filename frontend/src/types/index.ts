@@ -38,6 +38,7 @@ export interface CPPProgress {
 
 export interface CPPCard {
   id: string;
+  cppNumber?: string; // SC/DDMMYY/XXXXXX
   status: CPPStatus;
   plate: string;
   driver: string;
