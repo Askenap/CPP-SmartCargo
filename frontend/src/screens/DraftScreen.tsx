@@ -8,9 +8,11 @@ import type { CPPCard } from "../types";
 interface Props {
   card: CPPCard;
   onBack: () => void;
+  onActivate?: () => void;
+  onDelete?: () => void;
 }
 
-export function DraftScreen({ card, onBack }: Props) {
+export function DraftScreen({ card, onBack, onActivate, onDelete }: Props) {
   const dd = card.draftData;
   const hasPis = card.scenario === "draft_entry_pi" && card.pis;
   return (
@@ -123,6 +125,64 @@ export function DraftScreen({ card, onBack }: Props) {
           <div style={{ fontSize: 12, color: C.draft, lineHeight: 1.5 }}>
             ℹ После въезда на пост ЦПП станет активным.
           </div>
+        </div>
+      )}
+
+      {/* Кнопки действий */}
+      {(onActivate || onDelete) && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: 420,
+            background: C.white,
+            borderTop: `1px solid ${C.grayBorder}`,
+            padding: "10px 12px",
+            display: "flex",
+            gap: 8,
+            boxShadow: "0 -2px 10px rgba(0,0,0,.06)",
+          }}
+        >
+          {onActivate && (
+            <button
+              onClick={onActivate}
+              style={{
+                flex: 1,
+                padding: "11px 0",
+                borderRadius: 10,
+                border: "none",
+                background: C.green,
+                color: C.white,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              ▶ Активировать
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              style={{
+                padding: "11px 16px",
+                borderRadius: 10,
+                border: "none",
+                background: C.redBg,
+                color: C.red,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              🗑
+            </button>
+          )}
         </div>
       )}
     </div>

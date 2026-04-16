@@ -6,12 +6,11 @@ interface Props {
   cards: CPPCard[];
   onSelect: (id: string) => void;
   onCreate: () => void;
-  onActivate: (id: string) => void;
-  onDelete: (id: string) => void;
   onReset?: () => void;
+  onBorderMode?: () => void;
 }
 
-export function MenuScreen({ cards, onSelect, onCreate, onActivate, onDelete, onReset }: Props) {
+export function MenuScreen({ cards, onSelect, onCreate, onReset, onBorderMode }: Props) {
   const active = cards.find((c) => c.status === "active");
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans', sans-serif" }}>
@@ -159,54 +158,30 @@ export function MenuScreen({ cards, onSelect, onCreate, onActivate, onDelete, on
                 </div>
               )}
             </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 6,
-                marginTop: 8,
-                borderTop: `1px solid ${C.grayLight}`,
-                paddingTop: 8,
-              }}
-            >
-              {c.status === "draft" && (
-                <button
-                  onClick={() => onActivate(c.id)}
-                  style={{
-                    flex: 1,
-                    padding: "6px 0",
-                    borderRadius: 8,
-                    border: "none",
-                    background: C.greenBg,
-                    color: C.green,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  ▶ Активировать
-                </button>
-              )}
-              <button
-                onClick={() => onDelete(c.id)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: C.redBg,
-                  color: C.red,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  ...(c.status !== "draft" ? { flex: 1 } : {}),
-                }}
-              >
-                🗑 Удалить
-              </button>
-            </div>
           </div>
         ))}
+
+        {/* Демо: интерфейс пограничника */}
+        {onBorderMode && (
+          <button
+            onClick={onBorderMode}
+            style={{
+              width: "100%",
+              padding: 12,
+              marginTop: 12,
+              background: "#1e3a5f",
+              border: "none",
+              borderRadius: 12,
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            🛡 Интерфейс пограничника ПС КНБ
+          </button>
+        )}
       </div>
     </div>
   );
