@@ -94,18 +94,37 @@ export function DraftScreen({ card, onBack }: Props) {
           )}
         </div>
       )}
-      <div
-        style={{
-          margin: "10px 12px",
-          background: C.draftBg,
-          borderRadius: 12,
-          padding: "12px 16px",
-        }}
-      >
-        <div style={{ fontSize: 12, color: C.draft, lineHeight: 1.5 }}>
-          ℹ После въезда на пост ЦПП станет активным.
+      {card.scenario === "auto_undetermined" ? (
+        <div
+          style={{
+            margin: "10px 12px",
+            background: C.amberBg,
+            borderRadius: 12,
+            padding: "12px 16px",
+          }}
+        >
+          <div style={{ fontSize: 12, color: C.amber, lineHeight: 1.5, fontWeight: 600 }}>
+            🤖 ЦПП ожидает активации пограничником.
+          </div>
+          <div style={{ fontSize: 11, color: C.amber, lineHeight: 1.5, marginTop: 4, opacity: 0.8 }}>
+            Тип и схема этапности определятся автоматически после обнаружения подтверждающих
+            документов (ПИ, ДТ, ТД) при прохождении поста.
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          style={{
+            margin: "10px 12px",
+            background: C.draftBg,
+            borderRadius: 12,
+            padding: "12px 16px",
+          }}
+        >
+          <div style={{ fontSize: 12, color: C.draft, lineHeight: 1.5 }}>
+            ℹ После въезда на пост ЦПП станет активным.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

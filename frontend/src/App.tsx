@@ -7,8 +7,10 @@ import { DraftScreen } from "./screens/DraftScreen";
 import { EntryPIScreen } from "./screens/EntryPIScreen";
 import { EntryIMScreen } from "./screens/EntryIMScreen";
 import { ExitActiveScreen } from "./screens/ExitActiveScreen";
+import { AutoDetectScreen } from "./screens/AutoDetectScreen";
 import { VehiclesScreen } from "./screens/VehiclesScreen";
 import { DriversScreen } from "./screens/DriversScreen";
+import type { CPPCard } from "./types";
 
 type Screen = "menu" | "create" | "detail";
 
@@ -34,6 +36,11 @@ export default function App() {
   };
   const completeCard = (id: string) => {
     setCards((prev) => prev.map((c) => (c.id === id ? { ...c, status: "completed" } : c)));
+  };
+  const updateCard = (id: string, updates: Partial<CPPCard>) => {
+    setCards((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
+    );
   };
 
   if (screen === "create")
@@ -86,8 +93,19 @@ export default function App() {
       </div>
     );
 
+  // Авто-ЦПП с неопределённым типом → AutoDetectScreen
+  if (card.scenario === "auto_undetermined")
+    return (
+      <div style={{ maxWidth: 420, margin: "0 auto" }}>
+        <AutoDetectScreen
+          card={card}
+          onBack={goMenu}
+          onUpdateCard={(updates) => updateCard(card.id, updates)}
+        />
+      </div>
+    );
+
   const isExit = card.direction === "out" || card.scenario?.includes("exit");
-  // Импорт / порожний въезд (no-PI) → IM-экран; только "draft_entry_pi"/"transit_entry" → PI-экран
   const isIMorEmpty =
     card.scenario === "entry_im_empty" ||
     card.scenario === "draft_entry_no_pi";

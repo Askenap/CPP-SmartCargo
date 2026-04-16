@@ -28,7 +28,7 @@ interface Props {
   onBack: () => void;
 }
 
-type Mode = "manual" | "by_number";
+type Mode = "manual" | "by_number" | "auto";
 
 interface DetectedMeta {
   kind: "queue" | "pi" | "import" | "export" | "transit";
@@ -320,12 +320,38 @@ export function CreateWizard({ onDone, onBack }: Props) {
   // Step model (linear):
   // 0 — режим + стартовый ввод
   // 1 — ТС + Водитель
-  // 2 — Направление (manual)
-  // 3 — Очередь (manual, out)
+  // 2 — Направление (manual / auto)
+  // 3 — Очередь (manual+out / auto+out)
   // 4 — Тип (manual)
   // 5 — ПИ/ТД (manual, if needed)
-  const totalSteps = mode === "by_number" ? 2 : 5;
+  const totalSteps = mode === "by_number" ? 2 : mode === "auto" ? (dir === "out" ? 4 : 3) : 5;
   const activeD = Math.min(step > 1 ? step - 1 : step, totalSteps - 1);
+
+  function finishAuto() {
+    const qIdx = sQ ?? 0;
+    const q = mockQueues[qIdx] || mockQueues[0];
+    const dd: CPPCard["draftData"] =
+      dir === "out"
+        ? { queue: { system: "Cargo Ruqsat", number: q.id, status: "Подтверждено" } }
+        : undefined;
+    onDone({
+      id: `auto_${Date.now()}`,
+      status: "draft",
+      plate: plate.toUpperCase(),
+      driver: dName || (dT === "iin" ? `ИИН: ${dV}` : `Пасп: ${dV}`),
+      type:
+        dir === "in"
+          ? "Въезд в Республику Казахстан"
+          : "Выезд из Республики Казахстан",
+      customsPost: "ТП «Нұр жолы»",
+      from: dir === "in" ? "—" : "Казахстан",
+      to: "—",
+      scenario: "auto_undetermined",
+      scenarioLabel: "Тип определится автоматически",
+      direction: dir!,
+      draftData: dd,
+    });
+  }
 
   const goBackStep = () => {
     if (step === 0) onBack();
@@ -489,6 +515,7 @@ export function CreateWizard({ onDone, onBack }: Props) {
                 [
                   { k: "manual" as Mode, l: "Вручную" },
                   { k: "by_number" as Mode, l: "По номеру" },
+                  { k: "auto" as Mode, l: "Авто" },
                 ] as const
               ).map((m) => (
                 <button
@@ -533,6 +560,48 @@ export function CreateWizard({ onDone, onBack }: Props) {
                     borderRadius: 12,
                     border: "none",
                     background: C.primary,
+                    color: C.white,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Начать →
+                </button>
+              </div>
+            ) : mode === "auto" ? (
+              <div style={{ background: C.white, borderRadius: 14, padding: 18 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: C.transit,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                  }}
+                >
+                  🤖 Автоматическое создание
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: C.textSec,
+                    marginBottom: 14,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Укажите только ТС, водителя и направление. Тип ЦПП и схема этапности
+                  определятся автоматически после обнаружения документов (ПИ, ДТ, ТД)
+                  на пункте пропуска.
+                </div>
+                <button
+                  onClick={() => setStep(1)}
+                  style={{
+                    width: "100%",
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "none",
+                    background: C.transit,
                     color: C.white,
                     fontSize: 14,
                     fontWeight: 700,
@@ -800,7 +869,7 @@ export function CreateWizard({ onDone, onBack }: Props) {
                 if (mode === "by_number") {
                   finishAlt();
                 } else {
-                  setStep(2);
+                  setStep(2); // both manual and auto go to Direction
                 }
               }}
               disabled={!plateDriverValid}
@@ -809,7 +878,11 @@ export function CreateWizard({ onDone, onBack }: Props) {
                 padding: 12,
                 borderRadius: 12,
                 border: "none",
-                background: plateDriverValid ? C.primary : C.grayBorder,
+                background: plateDriverValid
+                  ? mode === "auto"
+                    ? C.transit
+                    : C.primary
+                  : C.grayBorder,
                 color: C.white,
                 fontSize: 14,
                 fontWeight: 700,
@@ -843,7 +916,12 @@ export function CreateWizard({ onDone, onBack }: Props) {
                 key={x.k}
                 onClick={() => {
                   setDir(x.k);
-                  setStep(x.k === "out" ? 3 : 4);
+                  if (mode === "auto") {
+                    if (x.k === "out") setStep(3); // queue required for exit
+                    else finishAuto(); // entry → create immediately
+                  } else {
+                    setStep(x.k === "out" ? 3 : 4);
+                  }
                 }}
                 style={{
                   width: "100%",
@@ -948,21 +1026,25 @@ export function CreateWizard({ onDone, onBack }: Props) {
             </button>
 
             <button
-              onClick={() => sQ !== null && setStep(4)}
+              onClick={() => {
+                if (sQ === null) return;
+                if (mode === "auto") finishAuto();
+                else setStep(4);
+              }}
               disabled={sQ === null}
               style={{
                 width: "100%",
                 padding: 12,
                 borderRadius: 12,
                 border: "none",
-                background: sQ !== null ? C.primary : C.grayBorder,
+                background: sQ !== null ? (mode === "auto" ? C.transit : C.primary) : C.grayBorder,
                 color: C.white,
                 fontSize: 14,
                 fontWeight: 700,
                 fontFamily: "inherit",
               }}
             >
-              Далее →
+              {mode === "auto" ? "Создать ЦПП" : "Далее →"}
             </button>
           </div>
         )}
