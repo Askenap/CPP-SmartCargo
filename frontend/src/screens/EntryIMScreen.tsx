@@ -10,20 +10,27 @@ import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
 import { stepSt } from "../components/stepStyles";
-import type { CPPCard, DTStatus } from "../types";
+import type { CPPCard, CPPProgress, DTStatus } from "../types";
 
 interface Props {
   card: CPPCard;
   onBack: () => void;
   onComplete?: () => void;
+  onSaveProgress?: (p: CPPProgress) => void;
 }
 
-export function EntryIMScreen({ card, onBack, onComplete }: Props) {
-  // Тип определяется из карточки, а не через useState
+export function EntryIMScreen({ card, onBack, onComplete, onSaveProgress }: Props) {
   const isImport = (card.scenarioLabel || "").toLowerCase().includes("импорт");
   const dtStatus: DTStatus = isImport ? "import" : "empty";
   const steps = getEntryIMSteps(dtStatus);
-  const [cs, setCs] = useState(0);
+  const [cs, setCsRaw] = useState(card.progress?.currentStep ?? 0);
+  const setCs: typeof setCsRaw = (v) => {
+    setCsRaw((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      onSaveProgress?.({ currentStep: next });
+      return next;
+    });
+  };
   const [tab, setTab] = useState<TabKey>("status");
   const [vd, setVd] = useState<string | null>(null);
   const total = steps.length;
@@ -174,7 +181,7 @@ export function EntryIMScreen({ card, onBack, onComplete }: Props) {
         }}
       >
         <button
-          onClick={() => setCs(0)}
+          onClick={() => { setCsRaw(0); onSaveProgress?.({ currentStep: 0 }); }}
           style={{
             padding: "9px 12px",
             borderRadius: 10,

@@ -23,6 +23,19 @@ export interface SourceData {
   status: string;
 }
 
+export interface CPPProgress {
+  // Entry PI
+  shared?: number;
+  piSteps?: Record<string, number>;
+  selectedPi?: number;
+  attachedQueueId?: string;
+  transitDeclared?: boolean;
+  // Entry IM / Exit
+  currentStep?: number;
+  // Exit-specific
+  hasExpDT?: boolean;
+}
+
 export interface CPPCard {
   id: string;
   status: CPPStatus;
@@ -47,6 +60,7 @@ export interface CPPCard {
     ibr?: SourceData;
     transit?: { number: string; origin: string; status: string };
   };
+  progress?: CPPProgress;
 }
 
 export interface ExitStep {

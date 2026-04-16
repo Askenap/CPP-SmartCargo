@@ -19,15 +19,16 @@ import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
 import { stepSt } from "../components/stepStyles";
-import type { CPPCard, QueueItem, StepStatus } from "../types";
+import type { CPPCard, CPPProgress, QueueItem, StepStatus } from "../types";
 
 interface Props {
   card: CPPCard;
   onBack: () => void;
   onComplete?: () => void;
+  onSaveProgress?: (p: CPPProgress) => void;
 }
 
-export function EntryPIScreen({ card, onBack, onComplete }: Props) {
+export function EntryPIScreen({ card, onBack, onComplete, onSaveProgress }: Props) {
   const piCount = card.piCount || 7;
   const tonType = card.tonType || "border";
   const tonName = card.tonName || (tonType === "border" ? "ТП на границе" : "ТП назначения в РК");
@@ -42,17 +43,62 @@ export function EntryPIScreen({ card, onBack, onComplete }: Props) {
     initPi[p.id] = 0;
   });
 
-  // ─── Прохождение поста ───
-  const [sh, setSh] = useState(0);
-  const [piS, setPiS] = useState<Record<number, number>>(initPi);
-  const [selPi, setSelPi] = useState(0);
+  // ─── Прохождение поста (с persist) ───
+  const savedPiSteps = card.progress?.piSteps;
+  const restoredPi: Record<number, number> = {};
+  PIS.forEach((p) => { restoredPi[p.id] = savedPiSteps ? (Number(savedPiSteps[String(p.id)]) || 0) : 0; });
+
+  const [sh, setShRaw] = useState(card.progress?.shared ?? 0);
+  const [piS, setPiSRaw] = useState<Record<number, number>>(restoredPi);
+  const [selPi, setSelPi] = useState(card.progress?.selectedPi ?? 0);
   const [tab, setTab] = useState<TabKey>("status");
   const [vd, setVd] = useState<string | null>(null);
 
   // ─── После поста: транзит до ТОН ───
-  const [attachedQueue, setAttachedQueue] = useState<QueueItem | null>(null);
+  const savedQ = card.progress?.attachedQueueId
+    ? mockQueues.find((q) => q.id === card.progress?.attachedQueueId) || null
+    : null;
+  const [attachedQueue, setAttachedQueueRaw] = useState<QueueItem | null>(savedQ);
   const [showQueueModal, setShowQueueModal] = useState(false);
-  const [transitDeclared, setTransitDeclared] = useState(false);
+  const [transitDeclared, setTransitDeclaredRaw] = useState(card.progress?.transitDeclared ?? false);
+
+  // Persist helper
+  const persist = (overrides?: Partial<CPPProgress>) => {
+    const piStepsObj: Record<string, number> = {};
+    PIS.forEach((p) => { piStepsObj[String(p.id)] = piS[p.id] || 0; });
+    onSaveProgress?.({
+      shared: sh,
+      piSteps: piStepsObj,
+      selectedPi: selPi,
+      attachedQueueId: attachedQueue?.id || undefined,
+      transitDeclared,
+      ...overrides,
+    });
+  };
+  const setSh = (v: number | ((p: number) => number)) => {
+    setShRaw((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      setTimeout(() => persist({ shared: next }), 0);
+      return next;
+    });
+  };
+  const setPiS = (v: Record<number, number> | ((p: Record<number, number>) => Record<number, number>)) => {
+    setPiSRaw((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      const piStepsObj: Record<string, number> = {};
+      PIS.forEach((p) => { piStepsObj[String(p.id)] = next[p.id] || 0; });
+      setTimeout(() => onSaveProgress?.({ piSteps: piStepsObj }), 0);
+      return next;
+    });
+  };
+  const setAttachedQueue = (q: QueueItem | null) => {
+    setAttachedQueueRaw(q);
+    setTimeout(() => onSaveProgress?.({ attachedQueueId: q?.id || undefined }), 0);
+  };
+  const setTransitDeclared = (v: boolean) => {
+    setTransitDeclaredRaw(v);
+    setTimeout(() => onSaveProgress?.({ transitDeclared: v }), 0);
+  };
 
   const pp = piS[selPi] || 0;
   const cntP = () => {

@@ -14,7 +14,7 @@ import { BorderRoleSelect, type BorderRole } from "./screens/border/BorderRoleSe
 import { BorderMainScreen } from "./screens/border/BorderMainScreen";
 import { BorderScanModal } from "./screens/border/BorderScanModal";
 import { BorderCppView } from "./screens/border/BorderCppView";
-import type { CPPCard } from "./types";
+import type { CPPCard, CPPProgress } from "./types";
 
 type Screen = "menu" | "create" | "detail";
 type AppMode = "driver" | "border";
@@ -64,6 +64,11 @@ export default function App() {
   };
   const updateCard = (id: string, updates: Partial<CPPCard>) => {
     setCards((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+  };
+  const saveProgress = (id: string, progress: CPPProgress) => {
+    setCards((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, progress: { ...c.progress, ...progress } } : c))
+    );
   };
 
   const addScanRecord = (cppId: string, plate: string, action: string) => {
@@ -227,18 +232,21 @@ export default function App() {
           card={card}
           onBack={goMenu}
           onComplete={() => completeCard(card.id)}
+          onSaveProgress={(p) => saveProgress(card.id, p)}
         />
       ) : isIMorEmpty ? (
         <EntryIMScreen
           card={card}
           onBack={goMenu}
           onComplete={() => completeCard(card.id)}
+          onSaveProgress={(p) => saveProgress(card.id, p)}
         />
       ) : (
         <EntryPIScreen
           card={card}
           onBack={goMenu}
           onComplete={() => completeCard(card.id)}
+          onSaveProgress={(p) => saveProgress(card.id, p)}
         />
       )}
     </div>

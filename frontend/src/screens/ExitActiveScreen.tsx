@@ -11,19 +11,27 @@ import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
 import { stepSt } from "../components/stepStyles";
-import type { CPPCard } from "../types";
+import type { CPPCard, CPPProgress } from "../types";
 
 interface Props {
   card: CPPCard;
   onBack: () => void;
   onComplete?: () => void;
+  onSaveProgress?: (p: CPPProgress) => void;
 }
 
-export function ExitActiveScreen({ card, onBack, onComplete }: Props) {
+export function ExitActiveScreen({ card, onBack, onComplete, onSaveProgress }: Props) {
   const et = card.exitType || "empty";
-  const [hasExpDT, setHasExpDT] = useState(et === "export");
+  const [hasExpDT, setHasExpDT] = useState(card.progress?.hasExpDT ?? et === "export");
   const steps = getExitSteps(et === "transit" ? "transit" : hasExpDT ? "export" : "empty");
-  const [cs, setCs] = useState(0);
+  const [cs, setCsRaw] = useState(card.progress?.currentStep ?? 0);
+  const setCs: typeof setCsRaw = (v) => {
+    setCsRaw((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      onSaveProgress?.({ currentStep: next, hasExpDT });
+      return next;
+    });
+  };
   const [tab, setTab] = useState<TabKey>("status");
   const [vd, setVd] = useState<string | null>(null);
   const total = steps.length;
@@ -165,7 +173,7 @@ export function ExitActiveScreen({ card, onBack, onComplete }: Props) {
             </div>
             {et === "empty" && !hasExpDT && cs >= 5 && (
               <button
-                onClick={() => setHasExpDT(true)}
+                onClick={() => { setHasExpDT(true); onSaveProgress?.({ hasExpDT: true, currentStep: cs }); }}
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -215,7 +223,7 @@ export function ExitActiveScreen({ card, onBack, onComplete }: Props) {
         }}
       >
         <button
-          onClick={() => setCs(0)}
+          onClick={() => { setCsRaw(0); onSaveProgress?.({ currentStep: 0, hasExpDT: et === "export" }); }}
           style={{
             padding: "9px 12px",
             borderRadius: 10,
