@@ -70,11 +70,14 @@ export function BorderCppView({
       }));
   const multiPi = PIS.length > 1;
 
-  // Simulated progress for demo (border guard sees where things are)
-  // In a real app this comes from backend; here we show all as "pending" (0 steps done)
-  const demoShared = 0;
+  // Читаем реальный прогресс из card.progress (общая БД с водителем)
+  const demoShared = card.progress?.shared ?? 0;
   const demoPiProgress: Record<number, number> = {};
-  PIS.forEach((p) => { demoPiProgress[p.id] = 0; });
+  PIS.forEach((p) => {
+    demoPiProgress[p.id] = card.progress?.piSteps
+      ? (Number(card.progress.piSteps[String(p.id)]) || 0)
+      : 0;
+  });
 
   // ─── Determine which type of timeline to show ───
   const canShowTimeline = card.status === "active" && !isAutoUndetermined;
@@ -346,6 +349,7 @@ export function BorderCppView({
     const isImport = (card.scenarioLabel || "").toLowerCase().includes("импорт");
     const steps = getEntryIMSteps(isImport ? "import" : "empty");
     const total = steps.length;
+    const imProgress = card.progress?.currentStep ?? 0;
     const rev = [...steps].reverse();
 
     return (
@@ -360,19 +364,19 @@ export function BorderCppView({
             borderBottom: `1px solid ${C.grayLight}`,
           }}
         >
-          <Ring passed={0} total={total} size={46} />
+          <Ring passed={imProgress} total={total} size={46} />
           <div>
             <div style={{ fontSize: 12, fontWeight: 700 }}>
               {isImport ? "Прогресс (импорт)" : "Прогресс (порожний)"}
             </div>
-            <div style={{ fontSize: 11, color: C.gray }}>0 из {total}</div>
+            <div style={{ fontSize: 11, color: C.gray }}>{imProgress} из {total}</div>
           </div>
         </div>
         {rev.map((step, i) => {
           const idx = total - 1 - i;
           const isIDK = step.id === "im7";
           const isPassport = step.id === "im4";
-          const status = stepSt(idx, 0);
+          const status = stepSt(idx, imProgress);
           return (
             <div key={step.id}>
               <EntryStepRow
@@ -412,8 +416,10 @@ export function BorderCppView({
   // ─── Exit timeline ───
   function renderExitTimeline() {
     const et = card.exitType || "empty";
-    const steps = getExitSteps(et);
+    const hasExp = card.progress?.hasExpDT ?? et === "export";
+    const steps = getExitSteps(et === "transit" ? "transit" : hasExp ? "export" : "empty");
     const total = steps.length;
+    const exitProgress = card.progress?.currentStep ?? 0;
     const rev = [...steps].reverse();
 
     return (
@@ -428,10 +434,10 @@ export function BorderCppView({
             borderBottom: `1px solid ${C.grayLight}`,
           }}
         >
-          <Ring passed={0} total={total} size={46} />
+          <Ring passed={exitProgress} total={total} size={46} />
           <div>
             <div style={{ fontSize: 12, fontWeight: 700 }}>Прогресс выезда</div>
-            <div style={{ fontSize: 11, color: C.gray }}>0 из {total}</div>
+            <div style={{ fontSize: 11, color: C.gray }}>{exitProgress} из {total}</div>
           </div>
         </div>
         {rev.map((step, i) => {
@@ -440,7 +446,7 @@ export function BorderCppView({
             <ExitStepRow
               key={step.id}
               step={step}
-              status={stepSt(idx, 0)}
+              status={stepSt(idx, exitProgress)}
               isLast={i === rev.length - 1}
             />
           );
