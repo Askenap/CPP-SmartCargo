@@ -19,7 +19,9 @@ interface Props {
 }
 
 export function EntryIMScreen({ card, onBack, onComplete }: Props) {
-  const [dtStatus, setDtStatus] = useState<DTStatus>("unknown");
+  // Тип определяется из карточки, а не через useState
+  const isImport = (card.scenarioLabel || "").toLowerCase().includes("импорт");
+  const dtStatus: DTStatus = isImport ? "import" : "empty";
   const steps = getEntryIMSteps(dtStatus);
   const [cs, setCs] = useState(0);
   const [tab, setTab] = useState<TabKey>("status");
@@ -41,7 +43,11 @@ export function EntryIMScreen({ card, onBack, onComplete }: Props) {
         rel="stylesheet"
       />
       {vd && <ScanModal name={vd} onClose={() => setVd(null)} />}
-      <Header title="ЦПП — Въезд в РК" sub={card.scenarioLabel || "ИМ / Порожний"} onBack={onBack} />
+      <Header
+        title="ЦПП — Въезд в РК"
+        sub={card.scenarioLabel || (isImport ? "Импорт (ДТ)" : "Порожний")}
+        onBack={onBack}
+      />
       <div style={{ padding: "8px 12px 0" }}>
         <QrButton card={card} />
       </div>
@@ -59,17 +65,13 @@ export function EntryIMScreen({ card, onBack, onComplete }: Props) {
             style={{
               fontSize: 10,
               fontWeight: 600,
-              color: C.amber,
-              background: C.amberBg,
+              color: isImport ? C.amber : C.green,
+              background: isImport ? C.amberBg : C.greenBg,
               padding: "2px 8px",
               borderRadius: 6,
             }}
           >
-            {dtStatus === "import"
-              ? "Импорт (ДТ)"
-              : dtStatus === "empty"
-                ? "Порожний"
-                : "Тип не определён"}
+            {isImport ? "Импорт (ДТ)" : "Порожний"}
           </span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 14px" }}>
@@ -130,60 +132,22 @@ export function EntryIMScreen({ card, onBack, onComplete }: Props) {
             >
               <Ring passed={cs} total={total} size={46} />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>Прогресс</div>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>
+                  {isImport ? "Прогресс (импорт)" : "Прогресс (порожний)"}
+                </div>
                 <div style={{ fontSize: 11, color: C.gray }}>
                   {cs} из {total}
                 </div>
               </div>
             </div>
-            {dtStatus === "unknown" && cs >= 3 && (
-              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                <button
-                  onClick={() => setDtStatus("empty")}
-                  style={{
-                    flex: 1,
-                    padding: "8px",
-                    background: C.greenBg,
-                    border: `1px dashed ${C.green}`,
-                    borderRadius: 8,
-                    color: C.green,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  🔔 СИК: Порожний
-                </button>
-                <button
-                  onClick={() => setDtStatus("import")}
-                  style={{
-                    flex: 1,
-                    padding: "8px",
-                    background: C.amberBg,
-                    border: `1px dashed ${C.amber}`,
-                    borderRadius: 8,
-                    color: C.amber,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  🔔 Кеден: ДТ Импорт
-                </button>
-              </div>
-            )}
             {rev.map((step, i) => {
               const idx = total - 1 - i;
-              const isDashed = step.type === "undetermined";
               return (
                 <EntryStepRow
                   key={step.id}
                   label={step.label}
                   status={stepSt(idx, cs)}
                   isLast={i === rev.length - 1}
-                  isDashed={isDashed}
                   subLabel={step.subLabel}
                   isCustoms={step.isCustoms}
                 />
@@ -210,10 +174,7 @@ export function EntryIMScreen({ card, onBack, onComplete }: Props) {
         }}
       >
         <button
-          onClick={() => {
-            setCs(0);
-            setDtStatus("unknown");
-          }}
+          onClick={() => setCs(0)}
           style={{
             padding: "9px 12px",
             borderRadius: 10,

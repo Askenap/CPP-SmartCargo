@@ -1,4 +1,4 @@
-import type { DTStatus, EntryIMStep, StepType } from "../types";
+import type { DTStatus, EntryIMStep } from "../types";
 
 export const ENTRY_SHARED_BEFORE = [
   { id: "s1", label: "Предварительная подготовка ЦПП" },
@@ -25,9 +25,13 @@ export const ENTRY_SHARED_AFTER = [
 export const TOTAL_SHARED = ENTRY_SHARED_BEFORE.length + ENTRY_SHARED_AFTER.length;
 export const TOTAL_PER = ENTRY_PER_PI.length;
 
+/**
+ * Схема этапности для Импорта и Порожнего.
+ * Тип определяется ДО показа экрана (через AutoDetect или при создании ЦПП).
+ * - "import" → полная схема с таможенным контролем и ДТ
+ * - "empty"  → упрощённая схема (только ИДК + выезд)
+ */
 export function getEntryIMSteps(dtStatus: DTStatus): EntryIMStep[] {
-  const cond: StepType =
-    dtStatus === "import" ? "mandatory" : dtStatus === "empty" ? "hidden" : "undetermined";
   const base: EntryIMStep[] = [
     { id: "im1", label: "Предварительная подготовка ЦПП", type: "active" },
     { id: "im2", label: "Въезд в территорию пограничного поста в сторону РК", type: "active" },
@@ -36,26 +40,32 @@ export function getEntryIMSteps(dtStatus: DTStatus): EntryIMStep[] {
     { id: "im4b", label: "Регистрация прибытия ТС в зону таможенного контроля", type: "mandatory" },
     { id: "im5", label: "Досмотр ТС пограничной службой", type: "mandatory" },
   ];
-  const conditional: EntryIMStep[] =
-    cond !== "hidden"
-      ? [
-          { id: "im7", label: "ИДК и контроль снимка", type: "mandatory" },
-          { id: "im6", label: "Таможенный осмотр", type: cond },
-          { id: "im8", label: "Транспортный контроль", type: cond },
-          { id: "im9", label: "Ветеринарный контроль", type: cond },
-          { id: "im10", label: "Фито-санитарный контроль", type: cond },
-          { id: "im11", label: "Санитарный контроль", type: cond },
-          {
-            id: "im12",
-            label: "Таможенный контроль",
-            type: cond,
-            subLabel: "Декларация на товары (импорт)",
-            isCustoms: true,
-          },
-        ]
-      : [{ id: "im7", label: "ИДК и контроль снимка", type: "mandatory" }];
+
+  const importSteps: EntryIMStep[] = [
+    { id: "im7", label: "ИДК и контроль снимка", type: "mandatory" },
+    { id: "im6", label: "Таможенный осмотр", type: "mandatory" },
+    { id: "im8", label: "Транспортный контроль", type: "mandatory" },
+    { id: "im9", label: "Ветеринарный контроль", type: "mandatory" },
+    { id: "im10", label: "Фито-санитарный контроль", type: "mandatory" },
+    { id: "im11", label: "Санитарный контроль", type: "mandatory" },
+    {
+      id: "im12",
+      label: "Таможенный контроль",
+      type: "mandatory",
+      subLabel: "Декларация на товары (импорт)",
+      isCustoms: true,
+    },
+  ];
+
+  const emptySteps: EntryIMStep[] = [
+    { id: "im7", label: "ИДК и контроль снимка", type: "mandatory" },
+  ];
+
+  const middle = dtStatus === "import" ? importSteps : emptySteps;
+
   const final: EntryIMStep[] = [
     { id: "im13", label: "Выезд с территории пограничного поста в сторону РК", type: "mandatory" },
   ];
-  return [...base, ...conditional, ...final];
+
+  return [...base, ...middle, ...final];
 }

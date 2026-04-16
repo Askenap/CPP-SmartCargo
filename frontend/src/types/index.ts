@@ -1,9 +1,9 @@
 export type CPPStatus = "draft" | "active" | "completed";
 export type Direction = "in" | "out";
 export type ExitType = "empty" | "export" | "transit";
-export type DTStatus = "unknown" | "empty" | "import";
+export type DTStatus = "empty" | "import";
 export type StepStatus = "pending" | "current" | "passed";
-export type StepType = "active" | "mandatory" | "undetermined" | "hidden";
+export type StepType = "active" | "mandatory" | "hidden";
 
 // ТОН (таможенный орган назначения) для транзита по ПИ:
 //  - "inland" — ТОН внутри Казахстана (груз едет до внутренней точки)
