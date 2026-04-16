@@ -34,6 +34,8 @@ export interface CPPProgress {
   currentStep?: number;
   // Exit-specific
   hasExpDT?: boolean;
+  // Независимые отметки пограничника (по step ID)
+  borderMarks?: Record<string, "passed" | "failed" | "extra">;
 }
 
 export interface CPPCard {

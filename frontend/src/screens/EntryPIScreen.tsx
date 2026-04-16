@@ -18,7 +18,7 @@ import { ScanModal } from "../components/ScanModal";
 import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
-import { stepSt } from "../components/stepStyles";
+import { stepSt, stepStWithMarks } from "../components/stepStyles";
 import type { CPPCard, CPPProgress, QueueItem, StepStatus } from "../types";
 
 interface Props {
@@ -124,9 +124,10 @@ export function EntryPIScreen({ card, onBack, onComplete, onSaveProgress }: Prop
   const ov = getOv();
   const multiPi = piCount > 1;
 
+  const bm = card.progress?.borderMarks;
   const allSt: { l: string; sh: boolean; gs: () => StepStatus }[] = [];
   ENTRY_SHARED_BEFORE.forEach((s, i) =>
-    allSt.push({ l: s.label, sh: true, gs: () => stepSt(i, sh) })
+    allSt.push({ l: s.label, sh: true, gs: () => stepStWithMarks(s.id, i, sh, bm) })
   );
   ENTRY_PER_PI.forEach((s, i) => {
     const can = sh >= ENTRY_SHARED_BEFORE.length;
@@ -138,7 +139,7 @@ export function EntryPIScreen({ card, onBack, onComplete, onSaveProgress }: Prop
     allSt.push({
       l: s.label,
       sh: true,
-      gs: () => (!bd || !ap ? "pending" : stepSt(ENTRY_SHARED_BEFORE.length + i, sh)),
+      gs: () => (!bd || !ap ? stepStWithMarks(s.id, -1, 0, bm) : stepStWithMarks(s.id, ENTRY_SHARED_BEFORE.length + i, sh, bm)),
     });
   });
   const rev = [...allSt].reverse();

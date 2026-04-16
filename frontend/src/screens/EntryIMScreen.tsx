@@ -9,7 +9,7 @@ import { ScanModal } from "../components/ScanModal";
 import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
-import { stepSt } from "../components/stepStyles";
+import { stepStWithMarks } from "../components/stepStyles";
 import type { CPPCard, CPPProgress, DTStatus } from "../types";
 
 interface Props {
@@ -153,7 +153,7 @@ export function EntryIMScreen({ card, onBack, onComplete, onSaveProgress }: Prop
                 <EntryStepRow
                   key={step.id}
                   label={step.label}
-                  status={stepSt(idx, cs)}
+                  status={stepStWithMarks(step.id, idx, cs, card.progress?.borderMarks)}
                   isLast={i === rev.length - 1}
                   subLabel={step.subLabel}
                   isCustoms={step.isCustoms}

@@ -18,7 +18,7 @@ import { ExitStepRow } from "../../components/ExitStepRow";
 import { TabBar, type TabKey } from "../../components/TabBar";
 import { DocsTabs } from "../../components/DocsTabs";
 import { ScanModal } from "../../components/ScanModal";
-import { stepSt } from "../../components/stepStyles";
+import { stepSt, stepStWithMarks } from "../../components/stepStyles";
 import type { CPPCard, StepStatus } from "../../types";
 import type { BorderRole } from "./BorderRoleSelect";
 
@@ -210,13 +210,11 @@ export function BorderCppView({
 
   const canShowTimeline = card.status === "active" && !isAutoUndetermined;
 
-  // ─── Вычисление: прошёл ли досмотр ТС ───
-  // Для выезда: "Досмотр ТС пограничной службой" = index 12 (ex13)
-  const exitDosmotrPassed = isExit && imExitProgress > 12;
-  // Для въезда PI: "Досмотр ТС" = s4 (index 4 в SHARED_BEFORE) → shared >= 5
-  const entryPIDosmotrPassed = isPI && sharedProgress >= ENTRY_SHARED_BEFORE.length;
-  // Для въезда IM: "Досмотр ТС" = im5 (index 5) → currentStep >= 6
-  const entryIMDosmotrPassed = isIMorEmpty && imExitProgress >= 6;
+  // ─── Вычисление: прошёл ли досмотр ТС (через borderMarks ИЛИ линейный прогресс) ───
+  const bMarks = card.progress?.borderMarks || {};
+  const exitDosmotrPassed = isExit && (bMarks["ex13"] === "passed" || imExitProgress > 12);
+  const entryPIDosmotrPassed = isPI && (bMarks["s4"] === "passed" || sharedProgress >= ENTRY_SHARED_BEFORE.length);
+  const entryIMDosmotrPassed = isIMorEmpty && (bMarks["im5"] === "passed" || imExitProgress >= 6);
 
   // Для въезда: дополнительное условие — ТД/ДТ выпущена или порожний
   const entryDocsReady = (() => {
@@ -258,13 +256,10 @@ export function BorderCppView({
       CB.green,
       () => {
         onActivateCard();
-        // Ставим прогресс на 1-й шаг (въезд на территорию пройден)
-        const initProgress = isExit
-          ? { currentStep: 1 }
-          : isPI
-            ? { shared: 1 }
-            : { currentStep: 1 };
-        onUpdateCard({ progress: initProgress });
+        // Ставим отметку на этап "Въезд на территорию поста"
+        const entryStepId = isExit ? "ex2" : isPI ? "s2" : "im2";
+        const marks = { ...(card.progress?.borderMarks || {}), [entryStepId]: "passed" as const };
+        onUpdateCard({ progress: { ...card.progress, borderMarks: marks } });
         onAddScanRecord("Въезд на территорию — разрешён");
         setConfirm(null);
       }
@@ -285,7 +280,13 @@ export function BorderCppView({
       `Разрешить выезд АТС ${card.plate} с территории пограничного поста?`,
       "Разрешить",
       CB.green,
-      () => { onAddScanRecord(isEntry ? "Выезд в сторону РК — разрешён" : "Выезд из РК — разрешён"); setConfirm(null); }
+      () => {
+        const exitStepId = isExit ? "ex14" : isPI ? "s5" : "im13";
+        const marks = { ...(card.progress?.borderMarks || {}), [exitStepId]: "passed" as const };
+        onUpdateCard({ progress: { ...card.progress, borderMarks: marks } });
+        onAddScanRecord(isEntry ? "Выезд в сторону РК — разрешён" : "Выезд из РК — разрешён");
+        setConfirm(null);
+      }
     );
   };
   const handleDenyExit = () => {
@@ -304,21 +305,10 @@ export function BorderCppView({
       "Пройден",
       CB.green,
       () => {
-        // Обновляем прогресс: досмотр ТС пройден
-        const curProgress = card.progress || {};
-        if (isExit) {
-          // Exit: "Досмотр ТС" = index 12 (ex13), ставим currentStep = max(current, 13)
-          const cs = curProgress.currentStep ?? 0;
-          onUpdateCard({ progress: { ...curProgress, currentStep: Math.max(cs, 13) } });
-        } else if (isPI) {
-          // Entry PI: "Досмотр ТС" = s4 (index 4 в SHARED_BEFORE), ставим shared >= 5
-          const sh = curProgress.shared ?? 0;
-          onUpdateCard({ progress: { ...curProgress, shared: Math.max(sh, ENTRY_SHARED_BEFORE.length) } });
-        } else if (isIMorEmpty) {
-          // Entry IM: "Досмотр ТС" = im5 (index 5), ставим currentStep >= 6
-          const cs = curProgress.currentStep ?? 0;
-          onUpdateCard({ progress: { ...curProgress, currentStep: Math.max(cs, 6) } });
-        }
+        // Пишем отметку ТОЛЬКО на этап "Досмотр ТС" — без сдвига линейного счётчика
+        const dosmotrStepId = isExit ? "ex13" : isPI ? "s4" : "im5";
+        const marks = { ...(card.progress?.borderMarks || {}), [dosmotrStepId]: "passed" as const };
+        onUpdateCard({ progress: { ...card.progress, borderMarks: marks } });
         onAddScanRecord("Досмотр ТС ПС — пройден");
         setConfirm(null);
       }
@@ -370,8 +360,9 @@ export function BorderCppView({
       id: string; label: string; isShared: boolean; isPerPI: boolean;
       status: StepStatus; piCountPassed?: number;
     }[] = [];
+    const bm = card.progress?.borderMarks;
     ENTRY_SHARED_BEFORE.forEach((s, i) => {
-      allSteps.push({ id: s.id, label: s.label, isShared: true, isPerPI: false, status: stepSt(i, sharedProgress) });
+      allSteps.push({ id: s.id, label: s.label, isShared: true, isPerPI: false, status: stepStWithMarks(s.id, i, sharedProgress, bm) });
     });
     ENTRY_PER_PI.forEach((s) => {
       const piIdx = ENTRY_PER_PI.indexOf(s);
@@ -466,7 +457,8 @@ export function BorderCppView({
         </div>
         {rev.map((step, i) => {
           const idx = total - 1 - i;
-          const status = stepSt(idx, cs);
+          const bm = card.progress?.borderMarks;
+          const status = stepStWithMarks(step.id, idx, cs, bm);
           return (
             <div key={step.id}>
               <EntryStepRow label={step.label} status={status} isLast={i === rev.length - 1} subLabel={step.subLabel} isCustoms={step.isCustoms} />
@@ -499,7 +491,8 @@ export function BorderCppView({
         </div>
         {rev.map((step, i) => {
           const idx = total - 1 - i;
-          const status = stepSt(idx, cs);
+          const bm = card.progress?.borderMarks;
+          const status = stepStWithMarks(step.id, idx, cs, bm);
           return (
             <div key={step.id}>
               <ExitStepRow step={step} status={status} isLast={i === rev.length - 1} />

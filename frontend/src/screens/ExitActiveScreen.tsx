@@ -10,7 +10,7 @@ import { ScanModal } from "../components/ScanModal";
 import { QrButton } from "../components/QrButton";
 import { TabBar, type TabKey } from "../components/TabBar";
 import { DocsTabs } from "../components/DocsTabs";
-import { stepSt } from "../components/stepStyles";
+import { stepSt, stepStWithMarks } from "../components/stepStyles";
 import type { CPPCard, CPPProgress } from "../types";
 
 interface Props {
@@ -197,7 +197,7 @@ export function ExitActiveScreen({ card, onBack, onComplete, onSaveProgress }: P
                 <ExitStepRow
                   key={step.id}
                   step={step}
-                  status={stepSt(idx, cs)}
+                  status={stepStWithMarks(step.id, idx, cs, card.progress?.borderMarks)}
                   isLast={i === rev.length - 1}
                 />
               );

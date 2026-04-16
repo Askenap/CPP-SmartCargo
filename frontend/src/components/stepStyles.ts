@@ -10,6 +10,21 @@ export const styCfg: Record<
   pending: { color: C.gray, bg: C.grayLight, ring: C.grayBorder, icon: "·" },
 };
 
+/** Линейный статус по счётчику */
 export function stepSt(i: number, p: number): StepStatus {
   return i < p ? "passed" : i === p ? "current" : "pending";
+}
+
+/**
+ * Статус с учётом независимых отметок пограничника.
+ * borderMarks[stepId] === "passed" перекрывает линейный статус.
+ */
+export function stepStWithMarks(
+  stepId: string,
+  linearIndex: number,
+  linearCounter: number,
+  borderMarks?: Record<string, string>
+): StepStatus {
+  if (borderMarks?.[stepId] === "passed") return "passed";
+  return stepSt(linearIndex, linearCounter);
 }
