@@ -327,11 +327,12 @@ export function CreateWizard({ onDone, onBack }: Props) {
   const totalSteps = mode === "by_number" ? 2 : mode === "auto" ? (dir === "out" ? 4 : 3) : 5;
   const activeD = Math.min(step > 1 ? step - 1 : step, totalSteps - 1);
 
-  function finishAuto() {
+  function finishAuto(dirOverride?: Direction) {
+    const d = dirOverride || dir!;
     const qIdx = sQ ?? 0;
     const q = mockQueues[qIdx] || mockQueues[0];
     const dd: CPPCard["draftData"] =
-      dir === "out"
+      d === "out"
         ? { queue: { system: "Cargo Ruqsat", number: q.id, status: "Подтверждено" } }
         : undefined;
     onDone({
@@ -340,15 +341,15 @@ export function CreateWizard({ onDone, onBack }: Props) {
       plate: plate.toUpperCase(),
       driver: dName || (dT === "iin" ? `ИИН: ${dV}` : `Пасп: ${dV}`),
       type:
-        dir === "in"
+        d === "in"
           ? "Въезд в Республику Казахстан"
           : "Выезд из Республики Казахстан",
       customsPost: "ТП «Нұр жолы»",
-      from: dir === "in" ? "—" : "Казахстан",
+      from: d === "in" ? "—" : "Казахстан",
       to: "—",
       scenario: "auto_undetermined",
       scenarioLabel: "Тип определится автоматически",
-      direction: dir!,
+      direction: d,
       draftData: dd,
     });
   }
@@ -918,7 +919,7 @@ export function CreateWizard({ onDone, onBack }: Props) {
                   setDir(x.k);
                   if (mode === "auto") {
                     if (x.k === "out") setStep(3); // queue required for exit
-                    else finishAuto(); // entry → create immediately
+                    else finishAuto(x.k); // entry → create immediately, pass dir directly
                   } else {
                     setStep(x.k === "out" ? 3 : 4);
                   }
