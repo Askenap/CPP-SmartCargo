@@ -374,7 +374,8 @@ export function BorderCppView({
       });
     });
     ENTRY_SHARED_AFTER.forEach((s) => {
-      allSteps.push({ id: s.id, label: s.label, isShared: true, isPerPI: false, status: "pending" });
+      const bmStatus = bm?.[s.id] === "passed" ? "passed" as const : "pending" as const;
+      allSteps.push({ id: s.id, label: s.label, isShared: true, isPerPI: false, status: bmStatus });
     });
 
     const total = TOTAL_SHARED + TOTAL_PER * PIS.length;

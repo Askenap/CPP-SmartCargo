@@ -139,7 +139,14 @@ export function EntryPIScreen({ card, onBack, onComplete, onSaveProgress }: Prop
     allSt.push({
       l: s.label,
       sh: true,
-      gs: () => (!bd || !ap ? stepStWithMarks(s.id, -1, 0, bm) : stepStWithMarks(s.id, ENTRY_SHARED_BEFORE.length + i, sh, bm)),
+      gs: () => {
+        // Если условия не выполнены — проверяем только borderMarks, без линейного счётчика
+        if (!bd || !ap) {
+          if (bm?.[s.id] === "passed") return "passed" as StepStatus;
+          return "pending" as StepStatus;
+        }
+        return stepStWithMarks(s.id, ENTRY_SHARED_BEFORE.length + i, sh, bm);
+      },
     });
   });
   const rev = [...allSt].reverse();
