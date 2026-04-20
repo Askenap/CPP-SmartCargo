@@ -204,7 +204,7 @@ export function ExitActiveScreen({ card, onBack, onComplete, onSaveProgress }: P
             })}
           </div>
         )}
-        <DocsTabs tab={tab} setTab={setTab} setVd={setVd} />
+        <DocsTabs tab={tab} setTab={setTab} setVd={setVd} card={card} />
       </div>
       <div
         style={{

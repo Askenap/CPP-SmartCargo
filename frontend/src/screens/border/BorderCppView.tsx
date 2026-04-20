@@ -656,7 +656,7 @@ export function BorderCppView({
           <TabBar tab={tab} setTab={setTab} />
           <div style={{ padding: "10px 12px 20px" }}>
             {tab === "status" && (<>{isPI && renderPITimeline()}{isIMorEmpty && renderIMTimeline()}{isExit && renderExitTimeline()}</>)}
-            <DocsTabs tab={tab} setTab={setTab} setVd={setVd} />
+            <DocsTabs tab={tab} setTab={setTab} setVd={setVd} card={card} />
           </div>
         </>
       )}

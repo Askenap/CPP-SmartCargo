@@ -621,7 +621,7 @@ export function EntryPIScreen({ card, onBack, onComplete, onSaveProgress }: Prop
             </div>
           </>
         )}
-        <DocsTabs tab={tab} setTab={setTab} setVd={setVd} />
+        <DocsTabs tab={tab} setTab={setTab} setVd={setVd} card={card} />
       </div>
       <div
         style={{
