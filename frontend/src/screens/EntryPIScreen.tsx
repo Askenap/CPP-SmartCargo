@@ -34,7 +34,8 @@ export function EntryPIScreen({ card, onBack, onComplete, onSaveProgress }: Prop
   const tonName = card.tonName || (tonType === "border" ? "ТП на границе" : "ТП назначения в РК");
   const PIS = Array.from({ length: piCount }, (_, i) => ({
     id: i,
-    regNumber: `KZ/060426/${String(1265 + i).padStart(9, "0")}`,
+    // Унифицированный рег. номер: берём из card.pis если есть, иначе генерируем
+    regNumber: card.pis?.[i]?.id || `PI-2026-${String(184 + i).padStart(5, "0")}`,
     label: `ПИ №${i + 1}`,
   }));
   const TOTAL_ALL = TOTAL_SHARED + TOTAL_PER * PIS.length;

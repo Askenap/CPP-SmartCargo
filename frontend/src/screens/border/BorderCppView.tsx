@@ -194,7 +194,7 @@ export function BorderCppView({
       ? card.pis!.map((p, i) => ({ id: i, label: `ПИ №${i + 1}`, regNumber: p.id }))
       : Array.from({ length: piCount }, (_, i) => ({
           id: i,
-          regNumber: `PI-${i + 1}`,
+          regNumber: `PI-2026-${String(184 + i).padStart(5, "0")}`,
           label: `ПИ №${i + 1}`,
         }));
   const multiPi = PIS.length > 1;

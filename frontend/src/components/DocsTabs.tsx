@@ -43,18 +43,28 @@ function CargoSummaryBlock({ summary, totalPis, totalBatches }: { summary: Cargo
 function CargoBatchRow({ batch }: { batch: CargoBatch }) {
   return (
     <div style={{
-      marginTop: 6, paddingLeft: 14, borderLeft: `2px solid ${C.primaryLight}`, paddingTop: 8, paddingBottom: 8, paddingRight: 10,
+      marginTop: 6, paddingLeft: 14, borderLeft: `2px solid ${C.primaryLight}`, paddingTop: 10, paddingBottom: 10, paddingRight: 10,
       background: C.grayLight, borderRadius: "0 10px 10px 0",
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: C.text }}>{batch.name}</span>
-        <span style={{ fontSize: 9, color: C.gray, fontFamily: "monospace" }}>{batch.id}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, fontFamily: "monospace" }}>{batch.id}</span>
+        <span style={{ fontSize: 9, color: C.gray }}>{batch.quantity} поз.</span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 4, marginBottom: 8 }}>
+        <div>
+          <div style={{ fontSize: 8, color: C.gray, textTransform: "uppercase", marginBottom: 1 }}>Отправитель</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.text, lineHeight: 1.3 }}>{batch.sender}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 8, color: C.gray, textTransform: "uppercase", marginBottom: 1 }}>Получатель</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.text, lineHeight: 1.3 }}>{batch.receiver}</div>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, paddingTop: 6, borderTop: `1px solid ${C.grayBorder}` }}>
         {[
           { l: "Вес", v: `${formatNumber(batch.weight)} кг` },
           { l: "Мест", v: formatNumber(batch.places) },
-          { l: "Кол-во", v: formatNumber(batch.quantity) },
+          { l: "Поз.", v: formatNumber(batch.quantity) },
           { l: "$", v: formatMoney(batch.valueUsd) },
         ].map((f) => (
           <div key={f.l}>
@@ -146,10 +156,15 @@ function PIDocsCard({ pi, onView }: { pi: PICargo; onView: (name: string) => voi
       {expanded && (
         <div style={{ marginTop: 10 }}>
           {pi.batches.map((b) => (
-            <div key={b.id} style={{ marginBottom: 8, paddingLeft: 10, borderLeft: `2px solid ${C.primaryLight}` }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 700 }}>{b.name}</span>
-                <span style={{ fontSize: 9, color: C.gray, fontFamily: "monospace" }}>{b.id}</span>
+            <div key={b.id} style={{ marginBottom: 10, paddingLeft: 10, borderLeft: `2px solid ${C.primaryLight}` }}>
+              <div style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, fontFamily: "monospace", marginBottom: 3 }}>{b.id}</div>
+                <div style={{ fontSize: 10, color: C.textSec, lineHeight: 1.3 }}>
+                  <span style={{ color: C.gray }}>От:</span> {b.sender}
+                </div>
+                <div style={{ fontSize: 10, color: C.textSec, lineHeight: 1.3 }}>
+                  <span style={{ color: C.gray }}>Для:</span> {b.receiver}
+                </div>
               </div>
               {b.docs.map((d, i) => <DocRow key={i} doc={d} onView={onView} />)}
             </div>

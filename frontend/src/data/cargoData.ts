@@ -1,18 +1,19 @@
 import type { CPPCard, DocumentItem } from "../types";
 
 export interface CargoBatch {
-  id: string;
-  name: string;
-  weight: number; // кг
+  id: string;          // TP-01 внутри ПИ
+  sender: string;      // отправитель товарной партии
+  receiver: string;    // получатель товарной партии
+  weight: number;      // кг
   places: number;
-  quantity: number;
+  quantity: number;    // кол-во товарных позиций (до 999)
   valueUsd: number;
   docs: DocumentItem[];
 }
 
 export interface PICargo {
-  piId: string;
-  piLabel: string;
+  piId: string;        // регистрационный номер ПИ (унифицированный)
+  piLabel: string;     // "ПИ №1"
   description: string;
   batches: CargoBatch[];
 }
@@ -24,76 +25,85 @@ export interface CargoSummary {
   totalValueUsd: number;
 }
 
-// ─── Моки товарных партий ───
-const BATCH_TEMPLATES: { name: string; docs: string[] }[][] = [
-  // Для первой ПИ
-  [
-    { name: "Смартфоны iPhone", docs: ["Сертификат соответствия", "Инвойс", "Упаковочный лист"] },
-    { name: "Планшеты iPad", docs: ["Сертификат соответствия", "Инвойс"] },
-  ],
-  // Для второй ПИ
-  [
-    { name: "Текстиль — ткани", docs: ["Фитосанитарный сертификат", "Инвойс", "Сертификат происхождения"] },
-    { name: "Текстиль — готовая одежда", docs: ["Сертификат соответствия", "Инвойс"] },
-    { name: "Аксессуары", docs: ["Инвойс", "Упаковочный лист"] },
-  ],
-  // Для третьей
-  [
-    { name: "Запчасти двигателя", docs: ["Технический паспорт", "Инвойс"] },
-    { name: "Электроника АТС", docs: ["Сертификат соответствия", "Инвойс", "Декларация"] },
-  ],
-  // Для четвёртой
-  [
-    { name: "Бытовая техника", docs: ["Сертификат соответствия", "Инвойс"] },
-  ],
-  // Для пятой
-  [
-    { name: "Продукты питания", docs: ["Вет. сертификат", "Фитосанитарный", "Инвойс"] },
-    { name: "Напитки", docs: ["Сертификат качества", "Инвойс"] },
-  ],
-  // Для шестой
-  [
-    { name: "Строительные материалы", docs: ["Сертификат качества", "Инвойс"] },
-    { name: "Инструменты", docs: ["Инвойс", "Упаковочный лист"] },
-  ],
-  // Для седьмой
-  [
-    { name: "Химическая продукция", docs: ["Сертификат безопасности", "Инвойс", "MSDS"] },
-  ],
+// ─── Отправители и получатели (пул для разных ТП) ───
+const SENDERS = [
+  'ООО "ShenZhen Electronics Co."',
+  'Istanbul Textile Ltd.',
+  'BMW Auto Parts GmbH',
+  '"Ташкент Продукты" ОАО',
+  'Samsung Trading Co.',
+  'Jiangsu Industrial Group',
+  'Hebei Chemical Corp.',
+  'Guangzhou Export LLC',
+  'Beijing Machinery Ltd.',
+  'Shanghai Tools Co.',
 ];
 
-// Детерминированная генерация чисел по идентификатору
+const RECEIVERS = [
+  'ТОО "КазЛогистик"',
+  'ТОО "АлматыИмпорт"',
+  'ООО "МосТорг"',
+  'ТОО "Нұр Трейд"',
+  'ООО "РусИмпорт"',
+  'ТОО "ЦентрАзия"',
+  'АО "КазПром"',
+  'ТОО "Евразия Снаб"',
+  'ООО "Северный Путь"',
+  'ТОО "АстанаТорг"',
+];
+
+// Описания ТП (для docs templates)
+const BATCH_DOC_TEMPLATES: string[][] = [
+  ["Сертификат соответствия", "Инвойс", "Упаковочный лист"],
+  ["Фитосанитарный сертификат", "Инвойс", "Сертификат происхождения"],
+  ["Сертификат качества", "Инвойс"],
+  ["Технический паспорт", "Инвойс", "Декларация"],
+  ["Сертификат безопасности", "Инвойс", "MSDS"],
+  ["Вет. сертификат", "Инвойс"],
+  ["Сертификат соответствия", "Инвойс"],
+  ["Инвойс", "Упаковочный лист"],
+];
+
+// Детерминированный хэш для стабильной генерации
 function hash(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i);
   return Math.abs(h);
 }
 
-function genBatch(piSeed: string, batchIdx: number, template: { name: string; docs: string[] }): CargoBatch {
-  const seed = hash(piSeed + batchIdx);
+function genBatch(piSeed: string, batchIdx: number): CargoBatch {
+  const seed = hash(piSeed + ":" + batchIdx);
+  const sender = SENDERS[seed % SENDERS.length];
+  const receiver = RECEIVERS[(seed >> 3) % RECEIVERS.length];
+  const docTemplate = BATCH_DOC_TEMPLATES[seed % BATCH_DOC_TEMPLATES.length];
   const weight = 500 + (seed % 8500);
   const places = 3 + (seed % 45);
-  const quantity = 10 + (seed % 490);
+  const quantity = 5 + (seed % 995); // до 999 товарных позиций
   const valueUsd = 2000 + (seed % 28000);
   return {
-    id: `${piSeed}-TP${batchIdx + 1}`,
-    name: template.name,
+    id: `ТП-${String(batchIdx + 1).padStart(2, "0")}`,
+    sender,
+    receiver,
     weight,
     places,
     quantity,
     valueUsd,
-    docs: template.docs.map((name, i) => ({
+    docs: docTemplate.map((name, i) => ({
       name,
-      valid: (seed + i) % 5 !== 0, // ~80% валидны
+      valid: (seed + i) % 5 !== 0,
       scan: (seed + i) % 7 !== 0,
     })),
   };
 }
 
+/** Кол-во ТП в ПИ (детерминированно, 1-3) */
+function batchCountForPi(piSeed: string): number {
+  return 1 + (hash(piSeed) % 3);
+}
+
 /**
- * Генерирует структуру ПИ+ТП для карточки.
- * Основа — card.pis (если есть) или piCount.
- * Для ЦПП без ПИ (import/empty/exit) — одна «виртуальная» партия.
+ * Возвращает иерархию ПИ → ТП для карточки.
+ * Использует card.pis[i].id как канонический регистрационный номер ПИ.
  */
 export function getCardCargo(card: CPPCard): {
   pis: PICargo[];
@@ -103,8 +113,8 @@ export function getCardCargo(card: CPPCard): {
 
   if (card.pis && card.pis.length > 0) {
     card.pis.forEach((pi, pidx) => {
-      const template = BATCH_TEMPLATES[pidx % BATCH_TEMPLATES.length];
-      const batches = template.map((t, bi) => genBatch(pi.id, bi, t));
+      const bCount = batchCountForPi(pi.id);
+      const batches = Array.from({ length: bCount }, (_, bi) => genBatch(pi.id, bi));
       pis.push({
         piId: pi.id,
         piLabel: `ПИ №${pidx + 1}`,
@@ -114,9 +124,9 @@ export function getCardCargo(card: CPPCard): {
     });
   } else if ((card.piCount || 0) > 0) {
     for (let i = 0; i < (card.piCount || 0); i++) {
-      const piId = `PI-${card.id}-${i + 1}`;
-      const template = BATCH_TEMPLATES[i % BATCH_TEMPLATES.length];
-      const batches = template.map((t, bi) => genBatch(piId, bi, t));
+      const piId = `PI-2026-${String(184 + i).padStart(5, "0")}`;
+      const bCount = batchCountForPi(piId);
+      const batches = Array.from({ length: bCount }, (_, bi) => genBatch(piId, bi));
       pis.push({
         piId,
         piLabel: `ПИ №${i + 1}`,
@@ -125,18 +135,17 @@ export function getCardCargo(card: CPPCard): {
       });
     }
   } else {
-    // Без ПИ — одна общая «партия» как базовая инфо
-    const template = BATCH_TEMPLATES[0];
-    const batches = template.slice(0, 1).map((t, bi) => genBatch(card.id, bi, t));
+    // Без ПИ (импорт/экспорт/порожний) — одна базовая запись по ДТ
+    const piId = `DT-${card.id}`;
+    const batches = [genBatch(piId, 0)];
     pis.push({
-      piId: card.id,
-      piLabel: "Груз",
+      piId,
+      piLabel: "Груз по ДТ",
       description: card.scenarioLabel || "Основной груз",
       batches,
     });
   }
 
-  // Свод по всем
   let totalWeight = 0, totalPlaces = 0, totalQuantity = 0, totalValueUsd = 0;
   pis.forEach((pi) => {
     pi.batches.forEach((b) => {
