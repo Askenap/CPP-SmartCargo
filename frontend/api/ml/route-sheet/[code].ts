@@ -2,6 +2,10 @@ const DEFAULT_BASE = "https://routelist-sc.fly.dev";
 
 export default async function handler(req: any, res: any) {
   const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");
+  const apiKeyRaw = process.env.SMARTML_API_KEY ?? "";
+  res.setHeader("X-ML-Upstream", BASE);
+  res.setHeader("X-ML-Key-Len", String(apiKeyRaw.length));
+  res.setHeader("X-ML-Key-Sample", apiKeyRaw ? apiKeyRaw.slice(0, 3) + "***" + apiKeyRaw.slice(-2) : "");
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     res.status(405).json({ error: "method_not_allowed" });
@@ -14,7 +18,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const apiKey = (process.env.SMARTML_API_KEY ?? "").trim();
+  const apiKey = apiKeyRaw.trim();
   if (!apiKey) {
     console.error("[ml-proxy] SMARTML_API_KEY is not set");
     res.status(500).json({ error: "config_missing", message: "Ключ доступа к Smart ML не настроен" });
