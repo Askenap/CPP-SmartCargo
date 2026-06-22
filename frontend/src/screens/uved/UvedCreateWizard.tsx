@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { C } from "../../data/colors";
+import { CURRENT_USER } from "../../data/currentUser";
 import { createRouteSheet, fetchSvhDictionary } from "./api";
 import type {
   CreateRouteSheetRequest,
@@ -34,10 +35,10 @@ interface FormState {
 }
 
 const initialForm: FormState = {
-  iinBin: "",
+  iinBin: CURRENT_USER.iinBin,
   companyName: "",
   fullName: "",
-  phone: "",
+  phone: CURRENT_USER.phone,
   invoiceInfo: "",
   grnz: "",
   grnzTrailer: "",
@@ -363,14 +364,12 @@ function Step1({
       }}
     >
       <SectionTitle>Контактные данные УВЭДа</SectionTitle>
-      <Field label="ИИН/БИН" error={errors.iinBin}>
+      <Field label="ИИН/БИН" error={errors.iinBin} hint="🔒 из учётной записи">
         <input
           value={form.iinBin}
-          onChange={(e) => update("iinBin", e.target.value.replace(/\D/g, "").slice(0, 12))}
-          inputMode="numeric"
-          maxLength={12}
-          placeholder="022041412441"
-          style={{ ...inputCss, fontFamily: MONO, letterSpacing: 1 }}
+          disabled
+          readOnly
+          style={{ ...inputCss, ...lockedInputCss, fontFamily: MONO, letterSpacing: 1 }}
         />
       </Field>
       <Field label="Название компании" error={errors.companyName}>
@@ -389,13 +388,13 @@ function Step1({
           style={inputCss}
         />
       </Field>
-      <Field label="Телефон" error={errors.phone}>
+      <Field label="Телефон" error={errors.phone} hint="🔒 из учётной записи">
         <input
           value={form.phone}
-          onChange={(e) => update("phone", e.target.value)}
+          disabled
+          readOnly
           inputMode="tel"
-          placeholder="+7 (700) 123-45-67"
-          style={inputCss}
+          style={{ ...inputCss, ...lockedInputCss, fontFamily: MONO }}
         />
       </Field>
     </div>
@@ -831,6 +830,12 @@ const inputCss: React.CSSProperties = {
   color: C.text,
   outline: "none",
   fontFamily: "inherit",
+};
+
+const lockedInputCss: React.CSSProperties = {
+  background: C.grayLight,
+  color: C.textSec,
+  cursor: "not-allowed",
 };
 
 const primaryBtn: React.CSSProperties = {
