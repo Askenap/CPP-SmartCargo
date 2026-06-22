@@ -43,11 +43,14 @@ npm run dev
 
 ### Переменные окружения
 
-Для интеграции с системой Smart Cargo ML (маршрутные листы) нужна переменная:
+Для интеграции с системой Smart Cargo ML (маршрутные листы) нужны:
 
-- `SMARTML_API_KEY` — ключ от команды Smart ML. В Vercel задаётся в Project Settings → Environment Variables для окружений **Production** и **Preview**.
+- `SMARTML_API_KEY` — ключ от команды Smart ML.
+- `SMARTML_API_BASE` — базовый URL Smart ML. По умолчанию `https://routelist-sc.fly.dev` (прод). Для тестового стенда — `https://test-routelist-sc.fly.dev`.
 
-Локально: скопируйте `frontend/.env.example` в `frontend/.env.local` и подставьте ключ. Ключ читается серверным прокси (`frontend/api/ml/...`) и в клиентский бандл НЕ попадает.
+Оба задаются в Vercel → Project Settings → Environment Variables для окружений **Production** и **Preview**.
+
+Локально: скопируйте `frontend/.env.example` в `frontend/.env.local` и подставьте значения. Ключ читается серверным прокси (`frontend/api/ml/...`) и в клиентский бандл НЕ попадает.
 
 ### Прокси к Smart Cargo ML
 

@@ -1,6 +1,7 @@
-const BASE = "https://routelist-sc.fly.dev";
+const DEFAULT_BASE = "https://routelist-sc.fly.dev";
 
 export default async function handler(req: any, res: any) {
+  const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     res.status(405).json({ error: "method_not_allowed" });

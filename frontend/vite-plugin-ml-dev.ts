@@ -1,6 +1,6 @@
 import type { Plugin } from "vite";
 
-const BASE = "https://routelist-sc.fly.dev";
+const DEFAULT_BASE = "https://routelist-sc.fly.dev";
 const ROUTE = /^\/api\/ml\/route-sheet\/(\d{6})(?:\/(border-pass))?\/?$/;
 
 async function readJsonBody(req: any): Promise<unknown> {
@@ -61,6 +61,7 @@ export function mlDevPlugin(): Plugin {
         if (!m) return next();
 
         const [, code, sub] = m;
+        const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");
         const apiKey = (process.env.SMARTML_API_KEY ?? "").trim();
         if (!apiKey) {
           console.error("[ml-dev-proxy] SMARTML_API_KEY is not set");
