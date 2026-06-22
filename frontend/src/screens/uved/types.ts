@@ -82,6 +82,9 @@ export interface UvedRouteSheet {
   dtTdEntries: UvedDtTdEntry[];
 
   borderPass: UvedBorderPass;
+
+  /** УВЭД-контакты могут вернуться публичным эндпоинтом не всегда (privacy). */
+  uved?: UvedContacts | null;
 }
 
 export interface CreateRouteSheetRequest {
