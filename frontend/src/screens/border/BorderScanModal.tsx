@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CB } from "../../data/borderColors";
 import type { CPPCard } from "../../types";
 
@@ -8,7 +10,22 @@ interface Props {
 }
 
 export function BorderScanModal({ cards, onSelect, onClose }: Props) {
+  const navigate = useNavigate();
+  const [mlCode, setMlCode] = useState("");
+  const [mlError, setMlError] = useState<string | null>(null);
+
   const available = cards.filter((c) => c.status === "active" || c.status === "draft");
+
+  function submitMl(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = mlCode.trim();
+    if (!/^\d{6}$/.test(trimmed)) {
+      setMlError("Код МЛ — ровно 6 цифр");
+      return;
+    }
+    onClose();
+    navigate(`/ml/${trimmed}`);
+  }
 
   return (
     <div
@@ -60,8 +77,67 @@ export function BorderScanModal({ cards, onSelect, onClose }: Props) {
             ✕
           </button>
         </div>
-        <div style={{ fontSize: 11, color: CB.textSec, marginBottom: 14 }}>
-          Выберите ЦПП для «сканирования» (в реальности — камера читает QR):
+
+        <form
+          onSubmit={submitMl}
+          style={{
+            border: `1px solid ${CB.grayBorder}`,
+            background: CB.grayLight,
+            borderRadius: 10,
+            padding: 10,
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ fontSize: 11, color: CB.textSec, marginBottom: 6 }}>
+            QR от Smart Cargo ML (6 цифр):
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              value={mlCode}
+              onChange={(e) => {
+                setMlError(null);
+                setMlCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+              }}
+              inputMode="numeric"
+              pattern="\d{6}"
+              placeholder="055131"
+              maxLength={6}
+              style={{
+                flex: 1,
+                padding: "10px 12px",
+                fontFamily: "monospace",
+                fontSize: 16,
+                fontWeight: 700,
+                letterSpacing: 2,
+                border: `1px solid ${CB.grayBorder}`,
+                borderRadius: 8,
+                background: CB.white,
+                outline: "none",
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: "10px 14px",
+                background: CB.primary,
+                color: CB.white,
+                border: "none",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Открыть
+            </button>
+          </div>
+          {mlError && (
+            <div style={{ fontSize: 11, color: CB.red, marginTop: 6 }}>{mlError}</div>
+          )}
+        </form>
+
+        <div style={{ fontSize: 11, color: CB.textSec, marginBottom: 8 }}>
+          Или выберите ЦПП из списка (в реальности — камера читает QR):
         </div>
         {available.length === 0 ? (
           <div style={{ textAlign: "center", padding: 20, color: CB.gray, fontSize: 12 }}>
