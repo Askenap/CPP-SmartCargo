@@ -41,6 +41,29 @@ npm run dev
 - **Build Command:** `npm run build`
 - **Output Directory:** `dist`
 
+### Переменные окружения
+
+Для интеграции с системой Smart Cargo ML (маршрутные листы) нужна переменная:
+
+- `SMARTML_API_KEY` — ключ от команды Smart ML. В Vercel задаётся в Project Settings → Environment Variables для окружений **Production** и **Preview**.
+
+Локально: скопируйте `frontend/.env.example` в `frontend/.env.local` и подставьте ключ. Ключ читается серверным прокси (`frontend/api/ml/...`) и в клиентский бандл НЕ попадает.
+
+### Прокси к Smart Cargo ML
+
+Серверные функции в `frontend/api/ml/`:
+
+- `GET  /api/ml/route-sheet/:code` — карточка МЛ из Smart ML
+- `POST /api/ml/route-sheet/:code/border-pass` — фиксация события прохождения поста
+
+Проверка локально:
+
+```bash
+curl http://localhost:5173/api/ml/route-sheet/055131
+```
+
+UI-демо без живого МЛ: `http://localhost:5173/ml/_demo` (фикстура).
+
 ## Экраны прототипа
 
 1. **MenuScreen** — список всех ЦПП с фильтрами
