@@ -16,7 +16,7 @@ export function UvedRouteSheetScreen() {
           alignItems: "center",
         }}
       >
-        <span onClick={() => navigate("/uved")} style={{ color: CB.white, fontSize: 13, cursor: "pointer" }}>← Назад</span>
+        <span onClick={() => navigate("/")} style={{ color: CB.white, fontSize: 13, cursor: "pointer" }}>← Назад</span>
         <div style={{ color: CB.white, fontSize: 14, fontWeight: 700 }}>МЛ {code}</div>
         <div style={{ width: 40 }} />
       </div>

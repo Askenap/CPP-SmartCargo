@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App";
 import { MLRouteSheetScreen } from "./screens/ml/MLRouteSheetScreen";
-import { UvedHomeScreen } from "./screens/uved/UvedHomeScreen";
 import { UvedCreateWizard } from "./screens/uved/UvedCreateWizard";
 import { UvedRouteSheetScreen } from "./screens/uved/UvedRouteSheetScreen";
 import { UvedDemoScreen } from "./screens/uved/UvedDemoScreen";
@@ -15,7 +14,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/ml/_demo" element={<MLRouteSheetScreen demo />} />
         <Route path="/ml/:code" element={<MLRouteSheetScreen />} />
-        <Route path="/uved" element={<UvedHomeScreen />} />
         <Route path="/uved/new" element={<UvedCreateWizard />} />
         <Route path="/uved/by-code/:code" element={<UvedRouteSheetScreen />} />
         <Route path="/uved/_demo" element={<UvedDemoScreen />} />
