@@ -8,15 +8,19 @@ import { UvedRouteSheetScreen } from "./screens/uved/UvedRouteSheetScreen";
 import { UvedDemoScreen } from "./screens/uved/UvedDemoScreen";
 import "./index.css";
 
+function MobileShell({ children }: { children: React.ReactNode }) {
+  return <div style={{ maxWidth: 420, margin: "0 auto" }}>{children}</div>;
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/ml/_demo" element={<MLRouteSheetScreen demo />} />
-        <Route path="/ml/:code" element={<MLRouteSheetScreen />} />
-        <Route path="/uved/new" element={<UvedCreateWizard />} />
-        <Route path="/uved/by-code/:code" element={<UvedRouteSheetScreen />} />
-        <Route path="/uved/_demo" element={<UvedDemoScreen />} />
+        <Route path="/ml/_demo" element={<MobileShell><MLRouteSheetScreen demo /></MobileShell>} />
+        <Route path="/ml/:code" element={<MobileShell><MLRouteSheetScreen /></MobileShell>} />
+        <Route path="/uved/new" element={<MobileShell><UvedCreateWizard /></MobileShell>} />
+        <Route path="/uved/by-code/:code" element={<MobileShell><UvedRouteSheetScreen /></MobileShell>} />
+        <Route path="/uved/_demo" element={<MobileShell><UvedDemoScreen /></MobileShell>} />
         <Route path="/*" element={<App />} />
       </Routes>
     </BrowserRouter>
