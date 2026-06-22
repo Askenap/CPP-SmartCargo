@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { C } from "../data/colors";
 import { StatusBadge } from "../components/StatusBadge";
 import type { CPPCard } from "../types";
@@ -12,6 +13,7 @@ interface Props {
 
 export function MenuScreen({ cards, onSelect, onCreate, onReset, onBorderMode }: Props) {
   const active = cards.find((c) => c.status === "active");
+  const navigate = useNavigate();
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans', sans-serif" }}>
       <link
@@ -151,6 +153,26 @@ export function MenuScreen({ cards, onSelect, onCreate, onReset, onBorderMode }:
           </div>
         ))}
 
+        {/* УВЭД: маршрутные листы */}
+        <button
+          onClick={() => navigate("/uved")}
+          style={{
+            width: "100%",
+            padding: 12,
+            marginTop: 12,
+            background: "#d97706",
+            border: "none",
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          📋 УВЭД: маршрутные листы Smart ML
+        </button>
+
         {/* Демо: интерфейс пограничника */}
         {onBorderMode && (
           <button
@@ -158,7 +180,7 @@ export function MenuScreen({ cards, onSelect, onCreate, onReset, onBorderMode }:
             style={{
               width: "100%",
               padding: 12,
-              marginTop: 12,
+              marginTop: 8,
               background: "#1e3a5f",
               border: "none",
               borderRadius: 12,

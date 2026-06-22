@@ -1,0 +1,27 @@
+import { useNavigate } from "react-router-dom";
+import { CB } from "../../data/borderColors";
+
+export function UvedDemoScreen() {
+  const navigate = useNavigate();
+  return (
+    <div style={{ minHeight: "100vh", background: CB.bg, fontFamily: "'DM Sans', sans-serif", color: CB.text }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${CB.primary} 0%, ${CB.primaryDark} 100%)`,
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span onClick={() => navigate("/uved")} style={{ color: CB.white, fontSize: 13, cursor: "pointer" }}>← Назад</span>
+        <div style={{ color: CB.white, fontSize: 14, fontWeight: 700 }}>УВЭД · Демо</div>
+        <div style={{ width: 40 }} />
+      </div>
+      <div style={{ margin: "10px 12px", background: CB.white, borderRadius: 14, padding: 24, textAlign: "center" }}>
+        <div style={{ fontSize: 13, color: CB.textSec }}>Демо со всеми статусами появится позже.</div>
+      </div>
+    </div>
+  );
+}
