@@ -5,10 +5,12 @@ import type {
   UvedSvhEntry,
 } from "./types";
 
-const DEFAULT_BASE = "https://test-routelist-sc.fly.dev";
-const BASE = (
-  (import.meta as any).env?.VITE_SMARTML_BASE ?? DEFAULT_BASE
-).replace(/\/+$/, "");
+/**
+ * UVED-эндпоинты публичные на стороне Smart ML, но их CORS закрыт для
+ * нашего прод-домена. Поэтому фронт ходит через наш серверный прокси
+ * на /api/uved/*, а тот форвардит на test-routelist-sc.fly.dev.
+ */
+const BASE = "/api/uved";
 
 export interface FieldError {
   field?: string;
@@ -67,14 +69,14 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function fetchSvhDictionary(): Promise<UvedSvhEntry[]> {
-  const list = await call<UvedSvhEntry[]>("/api/v1/public/svh-dictionary");
+  const list = await call<UvedSvhEntry[]>("/svh-dictionary");
   return list.filter((s) => s.active !== false);
 }
 
 export async function createRouteSheet(
   req: CreateRouteSheetRequest
 ): Promise<CreateRouteSheetResponse> {
-  return await call<CreateRouteSheetResponse>("/api/v1/public/route-sheets", {
+  return await call<CreateRouteSheetResponse>("/route-sheets", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(req),
@@ -83,10 +85,16 @@ export async function createRouteSheet(
 
 export async function getRouteSheetByCode(code: string): Promise<UvedRouteSheet> {
   return await call<UvedRouteSheet>(
-    `/api/v1/public/route-sheets/by-code/${encodeURIComponent(code)}`
+    `/route-sheets/by-code/${encodeURIComponent(code)}`
   );
 }
 
+/**
+ * PDF открывается через top-level navigation (window.open) — для navigation
+ * браузер не применяет CORS, так что можно идти на тест-стенд напрямую.
+ */
 export function pdfUrl(code: string): string {
-  return `${BASE}/api/v1/public/route-sheets/by-code/${encodeURIComponent(code)}/pdf`;
+  const upstream =
+    (import.meta as any).env?.VITE_SMARTML_BASE ?? "https://test-routelist-sc.fly.dev";
+  return `${String(upstream).replace(/\/+$/, "")}/api/v1/public/route-sheets/by-code/${encodeURIComponent(code)}/pdf`;
 }

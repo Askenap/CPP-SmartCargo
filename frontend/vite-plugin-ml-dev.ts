@@ -1,7 +1,12 @@
 import type { Plugin } from "vite";
 
 const DEFAULT_BASE = "https://routelist-sc.fly.dev";
-const ROUTE = /^\/api\/ml\/route-sheet\/(\d{6})(?:\/(border-pass))?\/?$/;
+const UVED_DEFAULT_BASE = "https://test-routelist-sc.fly.dev";
+
+const ML_ROUTE = /^\/api\/ml\/route-sheet\/(\d{6})(?:\/(border-pass))?\/?$/;
+const UVED_SVH = /^\/api\/uved\/svh-dictionary\/?$/;
+const UVED_ROUTES_POST = /^\/api\/uved\/route-sheets\/?$/;
+const UVED_ROUTE_BY_CODE = /^\/api\/uved\/route-sheets\/by-code\/(\d{6})\/?$/;
 
 async function readJsonBody(req: any): Promise<unknown> {
   return new Promise((resolve, reject) => {
@@ -34,7 +39,7 @@ async function proxyUpstream(
   try {
     r = await fetch(url, init);
   } catch (e) {
-    console.error("[ml-dev-proxy] upstream failed", e);
+    console.error("[dev-proxy] upstream failed", e);
     return { status: 502, body: { error: "upstream_unreachable" } };
   }
   const text = await r.text();
@@ -57,62 +62,112 @@ export function mlDevPlugin(): Plugin {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
         const path = url.split("?")[0];
-        const m = ROUTE.exec(path);
-        if (!m) return next();
 
-        const [, code, sub] = m;
-        const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");
-        const apiKey = (process.env.SMARTML_API_KEY ?? "").trim();
-        if (!apiKey) {
-          console.error("[ml-dev-proxy] SMARTML_API_KEY is not set");
-          return sendJson(res, 500, {
-            error: "config_missing",
-            message: "Ключ доступа к Smart ML не настроен",
-          });
-        }
-
-        try {
-          if (!sub) {
-            if (req.method !== "GET") {
-              res.setHeader("Allow", "GET");
-              return sendJson(res, 405, { error: "method_not_allowed" });
-            }
-            const r = await proxyUpstream(
-              `${BASE}/api/v1/external/route-sheets/by-code/${encodeURIComponent(code)}`,
-              { method: "GET", headers: { "X-API-Key": apiKey, Accept: "application/json" } }
-            );
-            return sendJson(res, r.status, r.body);
+        // ─── Пограничный прокси (с X-API-Key) ───
+        const ml = ML_ROUTE.exec(path);
+        if (ml) {
+          const apiKey = (process.env.SMARTML_API_KEY ?? "").trim();
+          if (!apiKey) {
+            console.error("[dev-proxy] SMARTML_API_KEY is not set");
+            return sendJson(res, 500, {
+              error: "config_missing",
+              message: "Ключ доступа к Smart ML не настроен",
+            });
           }
-          if (sub === "border-pass") {
-            if (req.method !== "POST") {
-              res.setHeader("Allow", "POST");
-              return sendJson(res, 405, { error: "method_not_allowed" });
-            }
-            let body: unknown = null;
-            try {
-              body = await readJsonBody(req);
-            } catch {
-              return sendJson(res, 400, { error: "invalid_json" });
-            }
-            const r = await proxyUpstream(
-              `${BASE}/api/v1/external/route-sheets/${encodeURIComponent(code)}/border-pass`,
-              {
-                method: "POST",
-                headers: {
-                  "X-API-Key": apiKey,
-                  "Content-Type": "application/json",
-                  Accept: "application/json",
-                },
-                body: JSON.stringify(body ?? {}),
+          const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");
+          const [, code, sub] = ml;
+          try {
+            if (!sub) {
+              if (req.method !== "GET") {
+                res.setHeader("Allow", "GET");
+                return sendJson(res, 405, { error: "method_not_allowed" });
               }
-            );
-            return sendJson(res, r.status, r.body);
+              const r = await proxyUpstream(
+                `${BASE}/api/v1/external/route-sheets/by-code/${encodeURIComponent(code)}`,
+                { method: "GET", headers: { "X-API-Key": apiKey, Accept: "application/json" } }
+              );
+              return sendJson(res, r.status, r.body);
+            }
+            if (sub === "border-pass") {
+              if (req.method !== "POST") {
+                res.setHeader("Allow", "POST");
+                return sendJson(res, 405, { error: "method_not_allowed" });
+              }
+              let body: unknown = null;
+              try {
+                body = await readJsonBody(req);
+              } catch {
+                return sendJson(res, 400, { error: "invalid_json" });
+              }
+              const r = await proxyUpstream(
+                `${BASE}/api/v1/external/route-sheets/${encodeURIComponent(code)}/border-pass`,
+                {
+                  method: "POST",
+                  headers: {
+                    "X-API-Key": apiKey,
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                  },
+                  body: JSON.stringify(body ?? {}),
+                }
+              );
+              return sendJson(res, r.status, r.body);
+            }
+          } catch (e) {
+            console.error("[dev-proxy] ml error", e);
+            return sendJson(res, 500, { error: "dev_proxy_failed" });
           }
-          return next();
-        } catch (e) {
-          console.error("[ml-dev-proxy] error", e);
-          return sendJson(res, 500, { error: "dev_proxy_failed" });
         }
+
+        // ─── УВЭД прокси (без ключа) ───
+        const UBASE = (process.env.SMARTML_API_BASE ?? UVED_DEFAULT_BASE).replace(/\/+$/, "");
+
+        if (UVED_SVH.test(path)) {
+          if (req.method !== "GET") {
+            res.setHeader("Allow", "GET");
+            return sendJson(res, 405, { error: "method_not_allowed" });
+          }
+          const r = await proxyUpstream(`${UBASE}/api/v1/public/svh-dictionary`, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+          });
+          return sendJson(res, r.status, r.body);
+        }
+
+        if (UVED_ROUTES_POST.test(path)) {
+          if (req.method !== "POST") {
+            res.setHeader("Allow", "POST");
+            return sendJson(res, 405, { error: "method_not_allowed" });
+          }
+          let body: unknown = null;
+          try {
+            body = await readJsonBody(req);
+          } catch {
+            return sendJson(res, 400, { error: "invalid_json" });
+          }
+          const r = await proxyUpstream(`${UBASE}/api/v1/public/route-sheets`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(body ?? {}),
+          });
+          return sendJson(res, r.status, r.body);
+        }
+
+        const uvedBc = UVED_ROUTE_BY_CODE.exec(path);
+        if (uvedBc) {
+          const [, code] = uvedBc;
+          if (req.method !== "GET") {
+            res.setHeader("Allow", "GET");
+            return sendJson(res, 405, { error: "method_not_allowed" });
+          }
+          const r = await proxyUpstream(
+            `${UBASE}/api/v1/public/route-sheets/by-code/${encodeURIComponent(code)}`,
+            { method: "GET", headers: { Accept: "application/json" } }
+          );
+          return sendJson(res, r.status, r.body);
+        }
+
+        return next();
       });
     },
   };
