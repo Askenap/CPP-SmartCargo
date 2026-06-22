@@ -1,6 +1,6 @@
 import type { Plugin } from "vite";
-import { fetchRouteSheet, postBorderPass } from "./api/_lib/smartml";
 
+const BASE = "https://routelist-sc.fly.dev";
 const ROUTE = /^\/api\/ml\/route-sheet\/(\d{6})(?:\/(border-pass))?\/?$/;
 
 async function readJsonBody(req: any): Promise<unknown> {
@@ -26,6 +26,29 @@ function sendJson(res: any, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
+async function proxyUpstream(
+  url: string,
+  init: RequestInit
+): Promise<{ status: number; body: unknown }> {
+  let r: Response;
+  try {
+    r = await fetch(url, init);
+  } catch (e) {
+    console.error("[ml-dev-proxy] upstream failed", e);
+    return { status: 502, body: { error: "upstream_unreachable" } };
+  }
+  const text = await r.text();
+  let body: unknown = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = { error: "invalid_upstream_json", raw: text.slice(0, 500) };
+    }
+  }
+  return { status: r.status, body };
+}
+
 export function mlDevPlugin(): Plugin {
   return {
     name: "ml-dev-proxy",
@@ -38,13 +61,25 @@ export function mlDevPlugin(): Plugin {
         if (!m) return next();
 
         const [, code, sub] = m;
+        const apiKey = (process.env.SMARTML_API_KEY ?? "").trim();
+        if (!apiKey) {
+          console.error("[ml-dev-proxy] SMARTML_API_KEY is not set");
+          return sendJson(res, 500, {
+            error: "config_missing",
+            message: "Ключ доступа к Smart ML не настроен",
+          });
+        }
+
         try {
           if (!sub) {
             if (req.method !== "GET") {
               res.setHeader("Allow", "GET");
               return sendJson(res, 405, { error: "method_not_allowed" });
             }
-            const r = await fetchRouteSheet(code);
+            const r = await proxyUpstream(
+              `${BASE}/api/v1/external/route-sheets/by-code/${encodeURIComponent(code)}`,
+              { method: "GET", headers: { "X-API-Key": apiKey, Accept: "application/json" } }
+            );
             return sendJson(res, r.status, r.body);
           }
           if (sub === "border-pass") {
@@ -58,7 +93,18 @@ export function mlDevPlugin(): Plugin {
             } catch {
               return sendJson(res, 400, { error: "invalid_json" });
             }
-            const r = await postBorderPass(code, body);
+            const r = await proxyUpstream(
+              `${BASE}/api/v1/external/route-sheets/${encodeURIComponent(code)}/border-pass`,
+              {
+                method: "POST",
+                headers: {
+                  "X-API-Key": apiKey,
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                body: JSON.stringify(body ?? {}),
+              }
+            );
             return sendJson(res, r.status, r.body);
           }
           return next();
