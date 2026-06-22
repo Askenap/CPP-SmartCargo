@@ -6,7 +6,7 @@ import { DEMO_FIXTURE } from "./demoFixture";
 import type { MLBorderPass, MLRouteSheet } from "./types";
 import { fmtAlmaty, minutesUntil } from "./format";
 
-const MONO = 'ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", "Roboto Mono", Consolas, monospace';
+const MONO = '"DM Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace';
 const INSPECTOR_LS_KEY = "ml.inspectorFullName";
 
 interface Props {
@@ -45,46 +45,26 @@ export function MLRouteSheetScreen({ demo = false }: Props) {
     };
   }, [code, demo]);
 
-  if (loading) return <CenterShell><div style={{ color: CB.textSec }}>Загружаем маршрутный лист…</div></CenterShell>;
+  if (loading) return <Shell><Header onBack={() => navigate(-1)} /><EmptyState text="Загружаем маршрутный лист…" /></Shell>;
   if (error) return <ErrorView error={error} code={code} onRetry={() => location.reload()} onBack={() => navigate(-1)} />;
-  if (!data) return <CenterShell><div style={{ color: CB.textSec }}>Нет данных</div></CenterShell>;
+  if (!data) return <Shell><Header onBack={() => navigate(-1)} /><EmptyState text="Нет данных" /></Shell>;
 
   if (success) {
     return (
       <Shell>
-        <BackBar onBack={() => navigate(-1)} title="Маршрутный лист" />
-        <div style={{ padding: 16, textAlign: "center" }}>
-          <div
-            style={{
-              background: CB.greenBg,
-              border: `1px solid ${CB.green}`,
-              borderRadius: 16,
-              padding: "28px 16px",
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: CB.green, marginBottom: 4 }}>
-              Событие записано
-            </div>
-            <div style={{ fontSize: 13, color: CB.text }}>
-              {success.statusDisplay}
-              {success.passedAt ? ` · ${fmtAlmaty(success.passedAt)}` : ""}
-            </div>
+        <Header onBack={() => navigate(-1)} />
+        <div style={{ margin: "10px 12px 0", background: CB.white, borderRadius: 14, padding: "28px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: CB.green, marginBottom: 4 }}>Событие записано</div>
+          <div style={{ fontSize: 12, color: CB.textSec }}>
+            {success.statusDisplay}
+            {success.passedAt ? ` · ${fmtAlmaty(success.passedAt)}` : ""}
           </div>
+        </div>
+        <div style={{ padding: "10px 12px 0" }}>
           <button
             onClick={() => navigate(-1)}
-            style={{
-              width: "100%",
-              padding: "14px 16px",
-              background: CB.primary,
-              color: CB.white,
-              border: "none",
-              borderRadius: 12,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
+            style={{ width: "100%", padding: 14, background: CB.primary, color: CB.white, border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
           >
             Сканировать дальше
           </button>
@@ -93,23 +73,141 @@ export function MLRouteSheetScreen({ demo = false }: Props) {
     );
   }
 
+  const ok = data.isValidForExit;
+  const alreadyProcessed = data.borderPass.status !== "NOT_RECORDED";
+  const routeMeta = describeRoute(data);
+
   return (
     <Shell>
-      <BackBar onBack={() => navigate(-1)} title="Маршрутный лист" />
-      <div style={{ padding: "12px 12px 110px" }}>
-        <DecisionBanner data={data} />
-        <IdBlock data={data} />
-        <RouteBlock data={data} />
-        <VehicleBlock data={data} />
-        <UvedBlock data={data} />
-        <InvoiceBlock data={data} />
-        <DeadlinesBlock data={data} />
-        <PrevBorderPassBlock bp={data.borderPass} />
+      <Header onBack={() => navigate(-1)} />
+
+      {/* Инфо-карточка */}
+      <div style={{ margin: "10px 12px 0", background: CB.white, borderRadius: 14, padding: "14px 16px" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: routeMeta.badgeBg, color: routeMeta.badgeFg }}>
+            {routeMeta.icon} {routeMeta.label}
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: CB.grayLight, color: CB.text }}>
+            → {routeMeta.target || "—"}
+          </span>
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 10, color: CB.gray, textTransform: "uppercase", marginBottom: 4 }}>Серия МЛ</div>
+          <div style={{ fontSize: 13, fontFamily: MONO, fontWeight: 700, wordBreak: "break-all" }}>
+            {data.serialNumber ?? data.lookupCode}
+          </div>
+          {data.serialNumber && (
+            <div style={{ fontSize: 11, color: CB.textSec, fontFamily: MONO, marginTop: 2 }}>код: {data.lookupCode}</div>
+          )}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 14px" }}>
+          <div>
+            <div style={{ fontSize: 10, color: CB.gray, textTransform: "uppercase" }}>ГРНЗ тягача</div>
+            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: MONO }}>{data.grnz ?? "—"}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: CB.gray, textTransform: "uppercase" }}>Водитель</div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{data.uved?.fullName ?? "—"}</div>
+          </div>
+          {data.grnzTrailer && (
+            <div>
+              <div style={{ fontSize: 10, color: CB.gray, textTransform: "uppercase" }}>ГРНЗ прицепа</div>
+              <div style={{ fontSize: 14, fontWeight: 700, fontFamily: MONO }}>{data.grnzTrailer}</div>
+            </div>
+          )}
+          <div>
+            <div style={{ fontSize: 10, color: CB.gray, textTransform: "uppercase" }}>Количество ТС</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: (data.vehicleCount ?? 1) > 1 ? CB.amber : CB.text }}>
+              {(data.vehicleCount ?? 1) > 1 ? `${data.vehicleCount} (автовоз)` : "1"}
+            </div>
+          </div>
+        </div>
       </div>
-      <ActionBar
-        onPass={() => setConfirm("pass")}
-        onFail={() => setConfirm("fail")}
-      />
+
+      {/* Статус */}
+      <div
+        style={{
+          margin: "10px 12px 0",
+          background: ok ? CB.greenBg : CB.redBg,
+          borderRadius: 12,
+          padding: "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <div style={{ fontSize: 20 }}>{ok ? "✅" : "⛔"}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: ok ? CB.green : CB.red }}>
+            {ok ? "Выпуск разрешён" : "Выпуск запрещён"}
+          </div>
+          <div style={{ fontSize: 11, color: CB.textSec, marginTop: 2, lineHeight: 1.35 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: CB.white, color: ok ? CB.green : CB.red, marginRight: 6 }}>
+              {data.statusDisplay ?? data.status}
+            </span>
+            {ok ? "Все проверки пройдены" : (data.validationMessage ?? "—")}
+          </div>
+        </div>
+      </div>
+
+      {/* Действия по роли */}
+      <div style={{ padding: "10px 12px 0" }}>
+        {!alreadyProcessed ? (
+          <div style={{ background: CB.white, borderRadius: 14, padding: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: CB.textSec, textTransform: "uppercase", marginBottom: 10 }}>
+              🛡 Выпуск с поста
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setConfirm("fail")} style={btnDanger}>⊘ Отказать</button>
+              <button onClick={() => setConfirm("pass")} style={btnAllow}>☑ Выпустить</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: CB.white, borderRadius: 14, padding: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: CB.textSec, textTransform: "uppercase", marginBottom: 10 }}>
+              🛡 Выпуск с поста
+            </div>
+            <div style={{ fontSize: 12, color: CB.textSec }}>
+              Уже обработан — повторная отметка невозможна.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Детали */}
+      <Section title="Маршрут">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <div style={{ fontSize: 20, lineHeight: 1 }}>{routeMeta.icon}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: routeMeta.badgeFg, marginBottom: 2 }}>{routeMeta.label}</div>
+            <div style={{ fontSize: 13, color: CB.text, lineHeight: 1.35 }}>{routeMeta.target || "—"}</div>
+          </div>
+        </div>
+      </Section>
+
+      {data.vins.length > 0 && <VinsSection vins={data.vins} />}
+
+      {data.uved && (
+        <Section title="УВЭД (отправитель)">
+          <div style={{ fontSize: 14, fontWeight: 700, color: CB.text }}>{data.uved.companyName ?? "—"}</div>
+          {data.uved.iinBin && (
+            <div style={{ fontFamily: MONO, fontSize: 12, color: CB.text, marginTop: 4 }}>{data.uved.iinBin}</div>
+          )}
+          {data.uved.fullName && (
+            <div style={{ fontSize: 12, color: CB.textSec, marginTop: 2 }}>{data.uved.fullName}</div>
+          )}
+        </Section>
+      )}
+
+      {data.invoiceInfo && <InvoiceSection text={data.invoiceInfo} />}
+
+      <DeadlinesSection data={data} />
+
+      {alreadyProcessed && <PrevBorderPassSection bp={data.borderPass} />}
+
+      {/* Bottom spacing */}
+      <div style={{ height: 24 }} />
+
       {confirm && (
         <ConfirmDialog
           mode={confirm}
@@ -126,300 +224,102 @@ export function MLRouteSheetScreen({ demo = false }: Props) {
   );
 }
 
-/* ───────────── helpers / blocks ───────────── */
+/* ───────────── layout shells ───────────── */
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: "100vh", background: CB.bg, color: CB.text, position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: CB.bg, fontFamily: "'DM Sans', sans-serif", color: CB.text }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
       {children}
     </div>
   );
 }
 
-function CenterShell({ children }: { children: React.ReactNode }) {
-  return (
-    <Shell>
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-        {children}
-      </div>
-    </Shell>
-  );
-}
-
-function BackBar({ onBack, title }: { onBack: () => void; title: string }) {
+function Header({ onBack }: { onBack: () => void }) {
   return (
     <div
       style={{
-        background: CB.primary,
-        color: CB.white,
-        padding: "12px 12px",
+        background: `linear-gradient(135deg, ${CB.primary} 0%, ${CB.primaryDark} 100%)`,
+        padding: "12px 16px",
         display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
-        gap: 12,
       }}
     >
-      <button
-        onClick={onBack}
-        aria-label="Назад"
-        style={{
-          width: 32,
-          height: 32,
-          border: "none",
-          borderRadius: 8,
-          background: "rgba(255,255,255,.15)",
-          color: CB.white,
-          cursor: "pointer",
-          fontSize: 18,
-        }}
-      >
-        ←
-      </button>
-      <div style={{ fontSize: 15, fontWeight: 700 }}>{title}</div>
+      <span onClick={onBack} style={{ color: CB.white, fontSize: 13, cursor: "pointer" }}>← Назад</span>
+      <div style={{ color: CB.white, fontSize: 14, fontWeight: 700 }}>Маршрутный лист</div>
+      <div style={{ width: 40 }} />
     </div>
   );
 }
 
-function DecisionBanner({ data }: { data: MLRouteSheet }) {
-  const ok = data.isValidForExit;
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        background: ok ? CB.greenBg : CB.redBg,
-        border: `2px solid ${ok ? CB.green : CB.red}`,
-        borderRadius: 16,
-        padding: 18,
-        marginBottom: 12,
-        textAlign: "center",
-      }}
-    >
-      <div style={{ fontSize: 40, lineHeight: 1, marginBottom: 6 }}>{ok ? "✅" : "⛔"}</div>
-      <div
-        style={{
-          fontSize: 22,
-          fontWeight: 800,
-          color: ok ? CB.green : CB.red,
-          letterSpacing: 0.5,
-        }}
-      >
-        {ok ? "ВЫПУСК РАЗРЕШЁН" : "ВЫПУСК ЗАПРЕЩЁН"}
-      </div>
-      <div style={{ fontSize: 13, color: CB.text, marginTop: 6, lineHeight: 1.4 }}>
-        {ok ? (data.statusDisplay ?? "") : (data.validationMessage ?? data.statusDisplay ?? "")}
-      </div>
-    </div>
-  );
-}
-
-function Card({
-  title,
-  children,
-  accent,
-}: {
-  title?: string;
-  children: React.ReactNode;
-  accent?: string;
-}) {
-  return (
-    <div
-      style={{
-        background: CB.white,
-        border: `1px solid ${CB.grayBorder}`,
-        borderLeft: accent ? `4px solid ${accent}` : `1px solid ${CB.grayBorder}`,
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 10,
-      }}
-    >
-      {title && (
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: CB.textSec,
-            marginBottom: 8,
-          }}
-        >
-          {title}
-        </div>
-      )}
+    <div style={{ margin: "10px 12px 0", background: CB.white, borderRadius: 14, padding: "12px 16px" }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: CB.gray, textTransform: "uppercase", marginBottom: 8 }}>{title}</div>
       {children}
     </div>
   );
 }
 
-function IdBlock({ data }: { data: MLRouteSheet }) {
-  const big = data.serialNumber ?? data.lookupCode;
+function EmptyState({ text }: { text: string }) {
   return (
-    <Card>
-      <div
-        style={{
-          fontFamily: MONO,
-          fontSize: 20,
-          fontWeight: 700,
-          color: CB.text,
-          wordBreak: "break-all",
-          lineHeight: 1.2,
-        }}
-      >
-        {big}
-      </div>
-      {data.serialNumber && (
-        <div style={{ fontFamily: MONO, fontSize: 12, color: CB.textSec, marginTop: 4 }}>
-          код: {data.lookupCode}
-        </div>
-      )}
-    </Card>
+    <div style={{ margin: "10px 12px 0", background: CB.white, borderRadius: 14, padding: 28, textAlign: "center", color: CB.textSec, fontSize: 13 }}>
+      {text}
+    </div>
   );
 }
 
-function RouteBlock({ data }: { data: MLRouteSheet }) {
-  let label = "Маршрут";
-  let icon = "📍";
-  let accent: string = CB.primary;
-  let target = "";
-  if (data.routeType === "TO_SVH") {
-    label = "На СВХ";
-    icon = "🏬";
-    target = data.destinationSvh?.name ?? "";
-  } else if (data.routeType === "SVH_TO_SVH") {
-    label = "Перемещение между СВХ";
-    icon = "🔀";
-    accent = CB.amber;
-    target = data.destinationSvh?.name ?? "";
-  } else if (data.routeType === "TO_CUSTOMS_POST") {
-    label = "На таможенный пост";
-    icon = "🏛️";
-    accent = CB.amber;
-    target = data.destinationCustomsPostName ?? "";
-  } else {
-    target = data.destinationSvh?.name ?? data.destinationCustomsPostName ?? "—";
-  }
-  return (
-    <Card title="Маршрут" accent={accent}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <div style={{ fontSize: 22, lineHeight: 1 }}>{icon}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: accent, marginBottom: 2 }}>{label}</div>
-          <div style={{ fontSize: 14, color: CB.text, lineHeight: 1.35 }}>{target || "—"}</div>
-        </div>
-      </div>
-    </Card>
-  );
-}
+/* ───────────── sections ───────────── */
 
-function VehicleBlock({ data }: { data: MLRouteSheet }) {
-  const [vinsOpen, setVinsOpen] = useState(false);
-  const multi = (data.vehicleCount ?? 1) > 1;
-  return (
-    <Card title="ТС и груз" accent={multi ? CB.amber : undefined}>
-      <Row label="ГРНЗ тягача">
-        <span style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700 }}>{data.grnz ?? "—"}</span>
-      </Row>
-      {data.grnzTrailer && (
-        <Row label="ГРНЗ прицепа">
-          <span style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700 }}>{data.grnzTrailer}</span>
-        </Row>
-      )}
-      <Row label="Количество ТС">
-        <span style={{ fontSize: 13, fontWeight: multi ? 800 : 600, color: multi ? CB.amber : CB.text }}>
-          {data.vehicleCount ?? 1}
-          {multi ? " (автовоз)" : " автомобиль"}
-        </span>
-      </Row>
-      {data.vins.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 11, color: CB.textSec, marginBottom: 4 }}>VIN</div>
-          {data.vins.length === 1 ? (
-            <div style={{ fontFamily: MONO, fontSize: 13, wordBreak: "break-all" }}>{data.vins[0]}</div>
-          ) : vinsOpen ? (
-            <>
-              {data.vins.map((v) => (
-                <div key={v} style={{ fontFamily: MONO, fontSize: 13, wordBreak: "break-all", marginBottom: 2 }}>
-                  {v}
-                </div>
-              ))}
-              <button
-                onClick={() => setVinsOpen(false)}
-                style={{ background: "none", border: "none", color: CB.primary, fontSize: 12, padding: 0, cursor: "pointer", marginTop: 4 }}
-              >
-                свернуть
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{ fontFamily: MONO, fontSize: 13, wordBreak: "break-all" }}>{data.vins[0]}</div>
-              <button
-                onClick={() => setVinsOpen(true)}
-                style={{ background: "none", border: "none", color: CB.primary, fontSize: 12, padding: 0, cursor: "pointer", marginTop: 4 }}
-              >
-                +{data.vins.length - 1} ещё
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function UvedBlock({ data }: { data: MLRouteSheet }) {
-  const u = data.uved;
-  if (!u) return null;
-  return (
-    <Card title="УВЭД (отправитель)">
-      <div style={{ fontSize: 15, fontWeight: 700, color: CB.text, lineHeight: 1.3 }}>
-        {u.companyName ?? "—"}
-      </div>
-      {u.iinBin && (
-        <div style={{ fontFamily: MONO, fontSize: 13, color: CB.text, marginTop: 4 }}>{u.iinBin}</div>
-      )}
-      {u.fullName && (
-        <div style={{ fontSize: 12, color: CB.textSec, marginTop: 4 }}>{u.fullName}</div>
-      )}
-    </Card>
-  );
-}
-
-function InvoiceBlock({ data }: { data: MLRouteSheet }) {
+function VinsSection({ vins }: { vins: string[] }) {
   const [open, setOpen] = useState(false);
-  const text = data.invoiceInfo;
-  if (!text) return null;
+  return (
+    <Section title={vins.length > 1 ? `VIN-коды (${vins.length})` : "VIN"}>
+      {vins.length === 1 ? (
+        <div style={{ fontFamily: MONO, fontSize: 13, wordBreak: "break-all" }}>{vins[0]}</div>
+      ) : open ? (
+        <>
+          {vins.map((v) => (
+            <div key={v} style={{ fontFamily: MONO, fontSize: 13, wordBreak: "break-all", padding: "3px 0", borderBottom: `1px solid ${CB.grayLight}` }}>
+              {v}
+            </div>
+          ))}
+          <button onClick={() => setOpen(false)} style={linkBtn}>свернуть</button>
+        </>
+      ) : (
+        <>
+          <div style={{ fontFamily: MONO, fontSize: 13, wordBreak: "break-all" }}>{vins[0]}</div>
+          <button onClick={() => setOpen(true)} style={linkBtn}>+{vins.length - 1} ещё</button>
+        </>
+      )}
+    </Section>
+  );
+}
+
+function InvoiceSection({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
   const long = text.length > 220;
   const visible = !long || open ? text : text.slice(0, 220) + "…";
   return (
-    <Card title="Инвойсы / описание груза">
-      <div
-        style={{
-          fontSize: 13,
-          color: CB.text,
-          background: CB.grayLight,
-          padding: 10,
-          borderRadius: 8,
-          whiteSpace: "pre-wrap",
-          lineHeight: 1.4,
-        }}
-      >
+    <Section title="Инвойсы / описание груза">
+      <div style={{ fontSize: 12, color: CB.text, background: CB.grayLight, padding: 10, borderRadius: 8, whiteSpace: "pre-wrap", lineHeight: 1.4 }}>
         {visible}
       </div>
       {long && (
-        <button
-          onClick={() => setOpen((o) => !o)}
-          style={{ background: "none", border: "none", color: CB.primary, fontSize: 12, padding: 0, cursor: "pointer", marginTop: 6 }}
-        >
+        <button onClick={() => setOpen((o) => !o)} style={linkBtn}>
           {open ? "свернуть" : "развернуть"}
         </button>
       )}
-    </Card>
+    </Section>
   );
 }
 
-function DeadlinesBlock({ data }: { data: MLRouteSheet }) {
+function DeadlinesSection({ data }: { data: MLRouteSheet }) {
   const left = minutesUntil(data.expiresAt);
   const expiring = left !== null && left < 15;
   return (
-    <Card title="Сроки">
+    <Section title="Сроки">
       <Row label="Выписан">{fmtAlmaty(data.issuedAt)}</Row>
       <Row label="Срок до">
         <span style={{ color: expiring ? CB.red : CB.text, fontWeight: expiring ? 700 : 400 }}>
@@ -431,98 +331,64 @@ function DeadlinesBlock({ data }: { data: MLRouteSheet }) {
           )}
         </span>
       </Row>
-      {data.arrivalDeadlineMinutes != null && (
-        <Row label="На доезд">{data.arrivalDeadlineMinutes} мин</Row>
-      )}
-    </Card>
+      {data.arrivalDeadlineMinutes != null && <Row label="На доезд">{data.arrivalDeadlineMinutes} мин</Row>}
+    </Section>
   );
 }
 
-function PrevBorderPassBlock({ bp }: { bp: MLBorderPass }) {
-  if (bp.status === "NOT_RECORDED") {
-    return (
-      <div style={{ fontSize: 11, color: CB.textSec, padding: "4px 6px 8px" }}>
-        Ранее не пропускался
-      </div>
-    );
-  }
+function PrevBorderPassSection({ bp }: { bp: MLBorderPass }) {
   const passed = bp.status === "PASSED";
   return (
-    <Card title="Предыдущее событие" accent={passed ? CB.green : CB.red}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: passed ? CB.green : CB.red, marginBottom: 6 }}>
+    <div style={{ margin: "10px 12px 0", background: CB.white, borderRadius: 14, padding: "12px 16px", borderLeft: `4px solid ${passed ? CB.green : CB.red}` }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: CB.gray, textTransform: "uppercase", marginBottom: 8 }}>Предыдущее событие</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: passed ? CB.green : CB.red, marginBottom: 6 }}>
         {bp.statusDisplay ?? (passed ? "Выпущен" : "Отказ")}
       </div>
       {bp.passedAt && <Row label="Время">{fmtAlmaty(bp.passedAt)}</Row>}
       {bp.inspectorFullName && <Row label="Инспектор">{bp.inspectorFullName}</Row>}
       {bp.post && <Row label="Пост">{bp.post}</Row>}
       {bp.comment && <Row label="Комментарий">{bp.comment}</Row>}
-    </Card>
+    </div>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, padding: "4px 0" }}>
-      <div style={{ fontSize: 12, color: CB.textSec }}>{label}</div>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, padding: "3px 0" }}>
+      <div style={{ fontSize: 11, color: CB.textSec }}>{label}</div>
       <div style={{ fontSize: 13, color: CB.text, textAlign: "right", wordBreak: "break-word" }}>{children}</div>
     </div>
   );
 }
 
-function ActionBar({ onPass, onFail }: { onPass: () => void; onFail: () => void }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: CB.white,
-        borderTop: `1px solid ${CB.grayBorder}`,
-        padding: 10,
-        display: "flex",
-        gap: 8,
-        maxWidth: 420,
-        margin: "0 auto",
-      }}
-    >
-      <button
-        onClick={onFail}
-        style={{
-          flex: 1,
-          padding: "14px 0",
-          background: CB.red,
-          color: CB.white,
-          border: "none",
-          borderRadius: 10,
-          fontSize: 14,
-          fontWeight: 800,
-          letterSpacing: 0.5,
-          cursor: "pointer",
-        }}
-      >
-        ОТКАЗАТЬ
-      </button>
-      <button
-        onClick={onPass}
-        style={{
-          flex: 1,
-          padding: "14px 0",
-          background: CB.green,
-          color: CB.white,
-          border: "none",
-          borderRadius: 10,
-          fontSize: 14,
-          fontWeight: 800,
-          letterSpacing: 0.5,
-          cursor: "pointer",
-        }}
-      >
-        ВЫПУСТИТЬ
-      </button>
-    </div>
-  );
+/* ───────────── helpers ───────────── */
+
+function describeRoute(data: MLRouteSheet): {
+  label: string;
+  icon: string;
+  target: string;
+  badgeBg: string;
+  badgeFg: string;
+} {
+  if (data.routeType === "TO_SVH") {
+    return { label: "На СВХ", icon: "🏬", target: data.destinationSvh?.name ?? "", badgeBg: "#dbeafe", badgeFg: "#2563eb" };
+  }
+  if (data.routeType === "SVH_TO_SVH") {
+    return { label: "Между СВХ", icon: "🔀", target: data.destinationSvh?.name ?? "", badgeBg: CB.amberBg, badgeFg: CB.amber };
+  }
+  if (data.routeType === "TO_CUSTOMS_POST") {
+    return { label: "На таможенный пост", icon: "🏛️", target: data.destinationCustomsPostName ?? "", badgeBg: CB.amberBg, badgeFg: CB.amber };
+  }
+  return {
+    label: "Маршрут",
+    icon: "📍",
+    target: data.destinationSvh?.name ?? data.destinationCustomsPostName ?? "—",
+    badgeBg: CB.grayLight,
+    badgeFg: CB.text,
+  };
 }
+
+/* ───────────── confirm dialog ───────────── */
 
 function ConfirmDialog({
   mode,
@@ -580,32 +446,21 @@ function ConfirmDialog({
         background: "rgba(0,0,0,.55)",
         zIndex: 200,
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "center",
+        padding: 20,
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: CB.white,
-          width: "100%",
-          maxWidth: 420,
-          borderRadius: "16px 16px 0 0",
-          padding: 16,
-        }}
+        style={{ background: CB.white, borderRadius: 16, padding: 20, width: "100%", maxWidth: 360 }}
       >
-        <div
-          style={{
-            fontSize: 16,
-            fontWeight: 800,
-            color: isPass ? CB.green : CB.red,
-            marginBottom: 4,
-          }}
-        >
-          {isPass ? "Подтвердить выпуск" : "Подтвердить отказ"}
+        <div style={{ fontSize: 15, fontWeight: 700, color: CB.text, marginBottom: 4 }}>
+          {isPass ? "Разрешить выпуск?" : "Запретить выпуск?"}
         </div>
-        <div style={{ fontSize: 12, color: CB.textSec, marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: CB.textSec, lineHeight: 1.5, marginBottom: 14 }}>
           МЛ <span style={{ fontFamily: MONO }}>{data.lookupCode}</span> · {data.grnz ?? "—"}
+          {isPass ? ". Действие записывается в журнал Smart ML." : ". Действие будет записано в журнал Smart ML."}
         </div>
 
         {dangerWarning && (
@@ -616,39 +471,24 @@ function ConfirmDialog({
               borderRadius: 10,
               padding: 10,
               marginBottom: 12,
-              fontSize: 12,
+              fontSize: 11,
               color: CB.red,
               lineHeight: 1.4,
             }}
           >
             ⚠️ Система Smart ML отметила МЛ как невалидный:
             <div style={{ marginTop: 4, fontWeight: 600 }}>{data.validationMessage ?? "—"}</div>
-            <div style={{ marginTop: 4 }}>Решение остаётся за вами.</div>
           </div>
         )}
 
         <Field label="ФИО пограничника">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Иванов И.И."
-            disabled={busy}
-            style={inputStyle}
-          />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Иванов И.И." disabled={busy} style={inputStyle} />
         </Field>
         <Field label="Комментарий (опционально)">
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={2}
-            disabled={busy}
-            style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
-          />
+          <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} disabled={busy} style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} />
         </Field>
 
-        {err && (
-          <div style={{ fontSize: 12, color: CB.red, marginBottom: 10 }}>{err}</div>
-        )}
+        {err && <div style={{ fontSize: 11, color: CB.red, marginBottom: 10 }}>{err}</div>}
 
         <div style={{ display: "flex", gap: 8 }}>
           <button
@@ -656,14 +496,15 @@ function ConfirmDialog({
             disabled={busy}
             style={{
               flex: 1,
-              padding: "12px 0",
-              background: CB.grayLight,
-              color: CB.text,
-              border: "none",
+              padding: 11,
               borderRadius: 10,
-              fontSize: 14,
+              border: `1px solid ${CB.grayBorder}`,
+              background: CB.white,
+              color: CB.textSec,
+              fontSize: 13,
               fontWeight: 600,
               cursor: busy ? "default" : "pointer",
+              fontFamily: "inherit",
             }}
           >
             Отмена
@@ -673,21 +514,31 @@ function ConfirmDialog({
             disabled={busy}
             style={{
               flex: 1,
-              padding: "12px 0",
+              padding: 11,
+              borderRadius: 10,
+              border: "none",
               background: isPass ? CB.green : CB.red,
               color: CB.white,
-              border: "none",
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 800,
+              fontSize: 13,
+              fontWeight: 700,
               cursor: busy ? "default" : "pointer",
               opacity: busy ? 0.7 : 1,
+              fontFamily: "inherit",
             }}
           >
-            {busy ? "Отправка…" : isPass ? "Выпустить" : "Отказать"}
+            {busy ? "Отправка…" : isPass ? "Разрешить" : "Запретить"}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 10, color: CB.gray, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+      {children}
     </div>
   );
 }
@@ -697,20 +548,52 @@ const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
   border: `1px solid ${CB.grayBorder}`,
   borderRadius: 10,
-  fontSize: 14,
+  fontSize: 13,
   background: CB.white,
   color: CB.text,
   outline: "none",
+  fontFamily: "inherit",
 };
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: 11, color: CB.textSec, marginBottom: 4 }}>{label}</div>
-      {children}
-    </div>
-  );
-}
+const btnAllow: React.CSSProperties = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 10,
+  border: "none",
+  background: CB.green,
+  color: CB.white,
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const btnDanger: React.CSSProperties = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 10,
+  border: "none",
+  background: CB.red,
+  color: CB.white,
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const linkBtn: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  color: CB.primary,
+  fontSize: 11,
+  fontWeight: 600,
+  padding: 0,
+  cursor: "pointer",
+  marginTop: 6,
+  fontFamily: "inherit",
+};
+
+/* ───────────── error view ───────────── */
 
 function ErrorView({
   error,
@@ -747,41 +630,22 @@ function ErrorView({
   }
   return (
     <Shell>
-      <BackBar onBack={onBack} title="Маршрутный лист" />
-      <div style={{ padding: 16 }}>
-        <div
-          style={{
-            background: CB.redBg,
-            border: `1px solid ${CB.red}`,
-            borderRadius: 14,
-            padding: 16,
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: 32, marginBottom: 6 }}>⚠️</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: CB.red, marginBottom: 6 }}>{title}</div>
-          <div style={{ fontSize: 13, color: CB.text, lineHeight: 1.4 }}>{msg}</div>
-        </div>
-        {canRetry && (
+      <Header onBack={onBack} />
+      <div style={{ margin: "10px 12px 0", background: CB.redBg, border: `1px solid ${CB.red}`, borderRadius: 14, padding: 16, textAlign: "center" }}>
+        <div style={{ fontSize: 32, marginBottom: 6 }}>⚠️</div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: CB.red, marginBottom: 6 }}>{title}</div>
+        <div style={{ fontSize: 12, color: CB.text, lineHeight: 1.4 }}>{msg}</div>
+      </div>
+      {canRetry && (
+        <div style={{ padding: "10px 12px 0" }}>
           <button
             onClick={onRetry}
-            style={{
-              width: "100%",
-              padding: "14px 0",
-              background: CB.primary,
-              color: CB.white,
-              border: "none",
-              borderRadius: 12,
-              fontSize: 14,
-              fontWeight: 700,
-              marginTop: 12,
-              cursor: "pointer",
-            }}
+            style={{ width: "100%", padding: 12, background: CB.primary, color: CB.white, border: "none", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
           >
             Повторить
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </Shell>
   );
 }
