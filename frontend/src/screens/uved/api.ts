@@ -22,8 +22,17 @@ export type UvedApiError =
   | { kind: "rate_limited"; status: 429; message: string }
   | { kind: "not_found"; status: 404; message: string }
   | { kind: "conflict"; status: 409; message: string }
+  | { kind: "profile_incomplete"; status: 422; message: string }
   | { kind: "network"; message: string }
   | { kind: "server"; status: number; message: string };
+
+export interface MyRouteSheetsPage {
+  content: UvedRouteSheet[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
 
 async function readBody(r: Response): Promise<any> {
   const text = await r.text();
@@ -50,6 +59,7 @@ function classifyError(status: number, body: any): UvedApiError {
   }
   if (status === 404) return { kind: "not_found", status: 404, message };
   if (status === 409) return { kind: "conflict", status: 409, message };
+  if (status === 422) return { kind: "profile_incomplete", status: 422, message };
   if (status === 429) return { kind: "rate_limited", status: 429, message };
   return { kind: "server", status, message };
 }
@@ -87,6 +97,27 @@ export async function getRouteSheetByCode(code: string): Promise<UvedRouteSheet>
   return await call<UvedRouteSheet>(
     `/route-sheets/by-code/${encodeURIComponent(code)}`
   );
+}
+
+/**
+ * Список «Мои МЛ» для авторизованного пользователя ЦПП.
+ * Идентификация УВЭДа (ИИН/БИН, телефон) берётся на серверном прокси
+ * из мок-профиля / сессии — фронт НИЧЕГО про профиль не передаёт.
+ */
+export async function fetchMyRouteSheets(page = 0): Promise<MyRouteSheetsPage> {
+  let r: Response;
+  try {
+    r = await fetch(`/api/ml/uved/my-route-sheets?page=${encodeURIComponent(String(page))}`, {
+      headers: { Accept: "application/json" },
+    });
+  } catch {
+    throw { kind: "network", message: "Нет связи с системой Smart Cargo ML" } satisfies UvedApiError;
+  }
+  if (!r.ok) {
+    const body = await readBody(r);
+    throw classifyError(r.status, body);
+  }
+  return (await readBody(r)) as MyRouteSheetsPage;
 }
 
 /**

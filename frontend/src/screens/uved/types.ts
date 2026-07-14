@@ -59,7 +59,7 @@ export interface UvedRouteSheet {
   statusDisplay: string | null;
   rejectionReason: string | null;
 
-  createdAt: string;
+  createdAt: string | null;
   issuedAt: string | null;
   expiresAt: string | null;
   arrivedAt: string | null;
@@ -79,7 +79,7 @@ export interface UvedRouteSheet {
 
   svhAccountingNumber: string | null;
   dxtNumber: string | null;
-  dtTdEntries: UvedDtTdEntry[];
+  dtTdEntries: UvedDtTdEntry[] | null;
 
   borderPass: UvedBorderPass;
 

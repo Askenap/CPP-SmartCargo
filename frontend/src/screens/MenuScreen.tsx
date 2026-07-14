@@ -206,13 +206,33 @@ export function MenuScreen({ cards, onSelect, onCreate, onReset, onBorderMode }:
           </div>
         ))}
 
+        {/* Мои МЛ из Smart ML (по профилю) */}
+        <button
+          onClick={() => navigate("/uved/my")}
+          style={{
+            width: "100%",
+            padding: 12,
+            marginTop: 4,
+            background: C.primaryLight,
+            border: "none",
+            borderRadius: 12,
+            color: C.primary,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          📋 Мои МЛ из Smart ML
+        </button>
+
         {/* «Добавить МЛ по коду» — вторичное действие */}
         <button
           onClick={() => setAddCodeOpen(true)}
           style={{
             width: "100%",
             padding: 10,
-            marginTop: 4,
+            marginTop: 6,
             background: "transparent",
             border: `1px dashed ${C.grayBorder}`,
             borderRadius: 12,

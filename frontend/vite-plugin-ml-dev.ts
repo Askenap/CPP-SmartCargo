@@ -4,7 +4,11 @@ const DEFAULT_BASE = "https://test-routelist-smartcargo.codecraft.kz";
 const UVED_DEFAULT_BASE = "https://test-routelist-smartcargo.codecraft.kz";
 
 const ML_ROUTE = /^\/api\/ml\/route-sheet\/(\d{6})(?:\/(border-pass))?\/?$/;
+const ML_MY_ROUTES = /^\/api\/ml\/uved\/my-route-sheets\/?$/;
 const UVED_SVH = /^\/api\/uved\/svh-dictionary\/?$/;
+const DEFAULT_MOCK_IIN = "020921500360";
+const DEFAULT_MOCK_PHONE = "";
+const PAGE_SIZE = 10;
 const UVED_ROUTES_POST = /^\/api\/uved\/route-sheets\/?$/;
 const UVED_ROUTE_BY_CODE = /^\/api\/uved\/route-sheets\/by-code\/(\d{6})\/?$/;
 
@@ -117,6 +121,42 @@ export function mlDevPlugin(): Plugin {
             console.error("[dev-proxy] ml error", e);
             return sendJson(res, 500, { error: "dev_proxy_failed" });
           }
+        }
+
+        // ─── УВЭД «Мои МЛ» через пограничный external + профиль сервера ───
+        if (ML_MY_ROUTES.test(path)) {
+          if (req.method !== "GET") {
+            res.setHeader("Allow", "GET");
+            return sendJson(res, 405, { error: "method_not_allowed" });
+          }
+          const apiKey = (process.env.SMARTML_API_KEY ?? "").trim();
+          if (!apiKey) {
+            return sendJson(res, 500, {
+              error: "config_missing",
+              message: "Ключ доступа к Smart ML не настроен",
+            });
+          }
+          const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");
+          const iinBin = (process.env.MOCK_UVED_IIN ?? DEFAULT_MOCK_IIN).replace(/\D/g, "");
+          const phone = (process.env.MOCK_UVED_PHONE ?? DEFAULT_MOCK_PHONE).trim();
+          if (!iinBin && !phone) {
+            return sendJson(res, 422, {
+              error: "profile_incomplete",
+              message: "Заполните ИИН/БИН или телефон в профиле",
+            });
+          }
+          const qs = new URLSearchParams();
+          const pageRaw = parseInt(new URL(`http://x${url}`).searchParams.get("page") ?? "0", 10);
+          const page = Number.isFinite(pageRaw) && pageRaw >= 0 ? pageRaw : 0;
+          if (iinBin) qs.set("iinBin", iinBin);
+          if (phone) qs.set("phone", phone);
+          qs.set("page", String(page));
+          qs.set("size", String(PAGE_SIZE));
+          const r = await proxyUpstream(`${BASE}/api/v1/external/route-sheets/my?${qs}`, {
+            method: "GET",
+            headers: { "X-API-Key": apiKey, Accept: "application/json" },
+          });
+          return sendJson(res, r.status, r.body);
         }
 
         // ─── УВЭД прокси (без ключа) ───

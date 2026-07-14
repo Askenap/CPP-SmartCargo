@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { C } from "../../data/colors";
 import { getRouteSheetByCode, pdfUrl, type UvedApiError } from "./api";
@@ -13,10 +13,14 @@ const REFETCH_MS = 30_000;
 
 export function UvedRouteSheetScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { code = "" } = useParams<{ code: string }>();
 
-  const [data, setData] = useState<UvedRouteSheet | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Preloaded из /uved/my — не делаем повторный fetch на initial mount.
+  const preloaded = (location.state as { preloaded?: UvedRouteSheet } | null)?.preloaded ?? null;
+
+  const [data, setData] = useState<UvedRouteSheet | null>(preloaded);
+  const [loading, setLoading] = useState(!preloaded);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<UvedApiError | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -50,7 +54,7 @@ export function UvedRouteSheetScreen() {
           status: r.status,
           statusDisplay: r.statusDisplay ?? statusMeta(r.status).label,
           destinationName,
-          createdAt: r.createdAt,
+          createdAt: r.createdAt ?? "",
           grnz: r.grnz,
           addedAt: new Date().toISOString(),
         });
@@ -64,6 +68,11 @@ export function UvedRouteSheetScreen() {
   }
 
   useEffect(() => {
+    // Если карточку передали preloaded (пришли из /uved/my) — не дёргаем
+    // публичный endpoint при первом mount. Пользователь может вручную
+    // нажать «Обновить», auto-refetch тоже сработает по таймеру ниже,
+    // если статус не финальный.
+    if (preloaded) return;
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
@@ -224,7 +233,7 @@ export function UvedRouteSheetScreen() {
       <BorderPassSection bp={data.borderPass} />
 
       {/* Таможенные реквизиты */}
-      {(data.svhAccountingNumber || data.dxtNumber || data.dtTdEntries.length > 0) && (
+      {(data.svhAccountingNumber || data.dxtNumber || (data.dtTdEntries?.length ?? 0) > 0) && (
         <Section title="Таможенные реквизиты">
           {data.svhAccountingNumber && (
             <Row label="Учётный № СВХ">
@@ -236,10 +245,10 @@ export function UvedRouteSheetScreen() {
               <span style={{ fontFamily: MONO }}>{data.dxtNumber}</span>
             </Row>
           )}
-          {data.dtTdEntries.length > 0 && (
+          {(data.dtTdEntries?.length ?? 0) > 0 && (
             <div style={{ marginTop: 8 }}>
               <div style={{ fontSize: 11, color: C.textSec, marginBottom: 6 }}>ДТ / ТД</div>
-              {data.dtTdEntries.map((dt) => (
+              {data.dtTdEntries!.map((dt) => (
                 <DtTdRow key={dt.number} dt={dt} />
               ))}
             </div>
