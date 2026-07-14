@@ -5,7 +5,6 @@ import App from "./App";
 import { MLRouteSheetScreen } from "./screens/ml/MLRouteSheetScreen";
 import { UvedCreateWizard } from "./screens/uved/UvedCreateWizard";
 import { UvedRouteSheetScreen } from "./screens/uved/UvedRouteSheetScreen";
-import { UvedMyRouteSheetsScreen } from "./screens/uved/UvedMyRouteSheetsScreen";
 import { UvedDemoScreen } from "./screens/uved/UvedDemoScreen";
 import "./index.css";
 
@@ -20,7 +19,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/ml/_demo" element={<MobileShell><MLRouteSheetScreen demo /></MobileShell>} />
         <Route path="/ml/:code" element={<MobileShell><MLRouteSheetScreen /></MobileShell>} />
         <Route path="/uved/new" element={<MobileShell><UvedCreateWizard /></MobileShell>} />
-        <Route path="/uved/my" element={<MobileShell><UvedMyRouteSheetsScreen /></MobileShell>} />
         <Route path="/uved/by-code/:code" element={<MobileShell><UvedRouteSheetScreen /></MobileShell>} />
         <Route path="/uved/_demo" element={<MobileShell><UvedDemoScreen /></MobileShell>} />
         <Route path="/*" element={<App />} />
