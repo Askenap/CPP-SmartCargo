@@ -26,7 +26,11 @@ export default async function handler(req: any, res: any) {
   try {
     r = await fetch(`${BASE}/api/v1/external/route-sheets/by-code/${encodeURIComponent(code)}`, {
       method: "GET",
-      headers: { "X-API-Key": apiKey, Accept: "application/json" },
+      headers: {
+        "X-API-Key": apiKey,
+        Accept: "application/json",
+        "User-Agent": "SmartCargo-CPP-Proxy/1.0 (Mozilla/5.0 compatible)",
+      },
     });
   } catch (e) {
     console.error("[ml-proxy] upstream GET failed", e);

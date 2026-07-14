@@ -29,6 +29,7 @@ export default async function handler(req: any, res: any) {
         "X-API-Key": apiKey,
         "Content-Type": "application/json",
         Accept: "application/json",
+        "User-Agent": "SmartCargo-CPP-Proxy/1.0 (Mozilla/5.0 compatible)",
       },
       body: JSON.stringify(req.body ?? {}),
     });

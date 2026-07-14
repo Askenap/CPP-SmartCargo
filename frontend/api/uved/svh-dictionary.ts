@@ -9,7 +9,10 @@ export default async function handler(req: any, res: any) {
   }
   try {
     const r = await fetch(`${BASE}/api/v1/public/svh-dictionary`, {
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "SmartCargo-CPP-Proxy/1.0 (Mozilla/5.0 compatible)",
+      },
     });
     const text = await r.text();
     res.status(r.status);
