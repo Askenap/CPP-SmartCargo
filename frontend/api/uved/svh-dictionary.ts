@@ -1,4 +1,4 @@
-const DEFAULT_BASE = "https://test-routelist-sc.fly.dev";
+const DEFAULT_BASE = "https://test-routelist-smartcargo.codecraft.kz";
 
 export default async function handler(req: any, res: any) {
   const BASE = (process.env.SMARTML_API_BASE ?? DEFAULT_BASE).replace(/\/+$/, "");

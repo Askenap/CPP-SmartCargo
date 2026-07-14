@@ -1,7 +1,7 @@
 import type { Plugin } from "vite";
 
-const DEFAULT_BASE = "https://routelist-sc.fly.dev";
-const UVED_DEFAULT_BASE = "https://test-routelist-sc.fly.dev";
+const DEFAULT_BASE = "https://test-routelist-smartcargo.codecraft.kz";
+const UVED_DEFAULT_BASE = "https://test-routelist-smartcargo.codecraft.kz";
 
 const ML_ROUTE = /^\/api\/ml\/route-sheet\/(\d{6})(?:\/(border-pass))?\/?$/;
 const UVED_SVH = /^\/api\/uved\/svh-dictionary\/?$/;

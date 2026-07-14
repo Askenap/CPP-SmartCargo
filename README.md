@@ -45,8 +45,9 @@ npm run dev
 
 Для интеграции с системой Smart Cargo ML (маршрутные листы) нужны:
 
-- `SMARTML_API_KEY` — ключ от команды Smart ML.
-- `SMARTML_API_BASE` — базовый URL Smart ML. По умолчанию `https://routelist-sc.fly.dev` (прод). Для тестового стенда — `https://test-routelist-sc.fly.dev`.
+- `SMARTML_API_KEY` — ключ от команды Smart ML (для эндпоинтов `/api/v1/external/*`). Тестовая БД Smart ML — копия прода, поэтому тестовый ключ = боевой.
+- `SMARTML_API_BASE` — базовый URL Smart ML. Тест — `https://test-routelist-smartcargo.codecraft.kz`. Прод — `https://routelist.smartcargo.global`.
+- `VITE_SMARTML_BASE` — тот же URL для клиентской PDF-ссылки (в бандл попадает, секретов не содержит).
 
 Оба задаются в Vercel → Project Settings → Environment Variables для окружений **Production** и **Preview**.
 

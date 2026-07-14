@@ -8,7 +8,7 @@ import type {
 /**
  * UVED-эндпоинты публичные на стороне Smart ML, но их CORS закрыт для
  * нашего прод-домена. Поэтому фронт ходит через наш серверный прокси
- * на /api/uved/*, а тот форвардит на test-routelist-sc.fly.dev.
+ * на /api/uved/*, а тот форвардит на test-routelist-smartcargo.codecraft.kz.
  */
 const BASE = "/api/uved";
 
@@ -95,6 +95,6 @@ export async function getRouteSheetByCode(code: string): Promise<UvedRouteSheet>
  */
 export function pdfUrl(code: string): string {
   const upstream =
-    (import.meta as any).env?.VITE_SMARTML_BASE ?? "https://test-routelist-sc.fly.dev";
+    (import.meta as any).env?.VITE_SMARTML_BASE ?? "https://test-routelist-smartcargo.codecraft.kz";
   return `${String(upstream).replace(/\/+$/, "")}/api/v1/public/route-sheets/by-code/${encodeURIComponent(code)}/pdf`;
 }
